@@ -1,4 +1,4 @@
-# matroid_chromatic/__init__.py
+# chromatic_matroids/__init__.py
 from .matroids import Matroid
 from .chromatic import compute_chromatic_polynomial
 from .generate_matroids_utils import uniform_matroid, graphic_matroid

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "chromatic_matroids"
-version = "0.0.2"
+version = "0.0.2post"
 authors = [
   { name="Sophie Rehberg", email="" },
   { name="Raul Penaguiao", email="raul.penaguiao@proton.me" },
@@ -21,4 +21,4 @@ license-files = ["LICENSE"]
 
 [project.urls]
 Homepage = "https://github.com/raulpenaguiao/chromatic-matroids/tree/main/chromatic_matroids"
-Issues = "https://github.com/raulpenaguiao/chromatic-matroids/chromatic-matroids/issues"
+Issues = "https://github.com/raulpenaguiao/chromatic-matroids/tree/main/chromatic_matroids/issues"
