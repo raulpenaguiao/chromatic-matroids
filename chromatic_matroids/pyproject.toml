@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "chromatic_matroids"
+version = "0.0.1"
+authors = [
+  { name="Raul Penaguiao", email="raul.penaguiao@proton.me" },
+  { name="Sophie Rehberg", email="" },
+]
+description = "A package that exposes some matroid operation and creations"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = ["LICENSE*"]
+
+[project.urls]
+Homepage = "https://github.com/raulpenaguiao/chromatic-matroids/chromatic-matroids"
+Issues = "https://github.com/raulpenaguiao/chromatic-matroids/chromatic-matroids/issues"
