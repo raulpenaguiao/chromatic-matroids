@@ -4,10 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "chromatic_matroids"
-version = "0.0.1"
+version = "0.0.2"
 authors = [
-  { name="Raul Penaguiao", email="raul.penaguiao@proton.me" },
   { name="Sophie Rehberg", email="" },
+  { name="Raul Penaguiao", email="raul.penaguiao@proton.me" },
 ]
 description = "A package that exposes some matroid operation and creations"
 readme = "README.md"
@@ -20,5 +20,5 @@ license = "MIT"
 license-files = ["LICENSE"]
 
 [project.urls]
-Homepage = "https://github.com/raulpenaguiao/chromatic-matroids/chromatic-matroids"
+Homepage = "https://github.com/raulpenaguiao/chromatic-matroids/tree/main/chromatic_matroids"
 Issues = "https://github.com/raulpenaguiao/chromatic-matroids/chromatic-matroids/issues"
