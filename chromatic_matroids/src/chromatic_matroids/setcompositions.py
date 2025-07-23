@@ -90,6 +90,17 @@ class SetComposition:
                 return False
         return True
 
+    def first(self) -> 'frozenset[int]':
+        """
+        Returns the first part of the set composition as a frozenset.
+        
+        Returns:
+            frozenset[int]: The first part of the set composition
+        """
+        if len(self.parts) == 0:
+            raise Exception("Empty set composition has no first part")
+        return frozenset(self.parts[0])
+
     def rest(self) -> 'SetComposition':
         """
         Returns a new Composition object containing all but the first part
@@ -204,10 +215,10 @@ class SetComposition:
         relabel_map = {}
         for i in range(lq+lt):#We need to be careful with the one-index issue here
             if i < lq:
-                relabel_map[i+1] = q_in.ground_set[i]
+                relabel_map[q_in.ground_set[i]] = i+1
             else:
-                relabel_map[i+1] = t_in.ground_set[i - lq]
-        
+                relabel_map[t_in.ground_set[i - lq]] = i+1
+
         #unrelabel quasi-shuffle
         qs = {str(SetComposition(set_composition_string).relabel(relabel_map)):coeff 
                     for set_composition_string, coeff in qs_in.items()}
@@ -241,17 +252,19 @@ class SetComposition:
         return False, {}
 
     @staticmethod
-    def quasi_shuffles(q: 'SetComposition', t: 'SetComposition'):
+    def quasi_shuffles(q: 'SetComposition', t: 'SetComposition', verbose: bool = False):
         """
         Compute all possible quasi-shuffles of two set compositions.
+        It requires that the two set compositions are disjoint.
+
         A quasi-shuffle combines two set compositions allowing both interleaving and union 
         of corresponding terms.
 
-        For example, quasi-shuffling [[2], [1,3]] and [[2], [1]] would give:
-        - [[2], [5], [4], [1,3]] (interleaving)
-        - [[2], [1,3], [5], [4]] (interleaving)
-        - [[2, 5], [1, 3], [4]] (adding first terms)
-        - [[2], [1, 3, 5], [4]] (adding first and second terms)
+        For example, quasi-shuffling [[2], [1,3]] and [[a], [b]] would give:
+        - [[2], [a], [b], [1,3]] (interleaving)
+        - [[2], [1,3], [a], [b]] (interleaving)
+        - [[2, a], [1, 3], [b]] (adding first terms and interleaving the remaining ones)
+        - [[2, a], [1, 3, b]] (adding first and second terms)
         And other combinations...
         
         Args:
@@ -260,38 +273,52 @@ class SetComposition:
             
         Returns:
             dict: Dictionary mapping resulting set compositions in string format to their coefficients.
-                 The coefficients track how many ways that set composition can be formed.
+                 The coefficients track how many ways set composition can be formed via quasi-shuffles.
         
         Note:
             Uses the recursive formula:
             qs(a·q, b·t) = a·qs(q, bt) + b·qs(aq, t) + (a+b)·qs(q, t)
             where a·q means set composition q with 'a' prepended
+
+            It is optimized with memoization to avoid recomputing previously computed quasi-shuffles.
         """
+        if(verbose):
+            print(f"Computing quasi-shuffles of {q} and {t}.")
         
-        #No qausi-shuffles of non-disjoint sets
+        #No quasi-shuffles of non-disjoint sets
         for q_el in q.ground_set:
             if q_el in t.ground_set:
-                raise("Exception")
+                raise ValueError(f"Set compositions {q} and {t} are not disjoint, cannot compute quasi-shuffles")
         for t_el in t.ground_set:
             if t_el in q.ground_set:
-                raise("Exception")
+                raise ValueError(f"Set compositions {q} and {t} are not disjoint, cannot compute quasi-shuffles")
+        if(verbose):
+            print(f"Quasi-shuffles of {q} and {t} are not disjoint")
         
         # Base cases: if either composition is empty, return the other
         if len(q.ground_set) == 0:
+            if(verbose):
+                print("Base case hit")
             return {str(t): 1}
         if len(t.ground_set) == 0:
+            if(verbose):
+                print("Base case hit")
             return {str(q): 1}
         
-        #fetch from cache
+        #Fetch from cache
         found_in_cache, qs = SetComposition.quasi_shuffles_fetch_from_cache(q, t)
         if found_in_cache:
+            if(verbose):
+                print("Cached case hit")
             return qs
         
         # Get the first terms and rest of each composition
-        a = q.parts[0]
-        b = t.parts[0]
+        a = q.first()
+        b = t.first()
         qrest = q.rest()
         trest = t.rest()
+        if(verbose):
+            print(f"First {a} and {b} as well as rest terms {qrest} and {str(trest)}.")
 
         answer = {}
         
@@ -303,7 +330,7 @@ class SetComposition:
                 answer[newqs] = 0
             answer[newqs] += qsh1[opistr]
         
-        # Case 2: Take 'b' from second set composition > + b·qs(aq, t)
+        # Case 2: Take 'b' from second set composition > b·qs(aq, t)
         qsh2 = SetComposition.quasi_shuffles(q, trest)
         for opistr in qsh2:
             newqs = str(SetComposition(opistr).prepend(b))
@@ -314,7 +341,8 @@ class SetComposition:
         # Case 3: Take both first terms and union them together > (a+b)·qs(q, t)
         qsh3 = SetComposition.quasi_shuffles(qrest, trest)
         for opistr in qsh3:
-            newqs = str(SetComposition(opistr).prepend(a + b))
+            union = frozenset(a.union(b))
+            newqs = str(SetComposition(opistr).prepend(union))
             if not(newqs in answer):
                 answer[newqs] = 0
             answer[newqs] += qsh3[opistr]
