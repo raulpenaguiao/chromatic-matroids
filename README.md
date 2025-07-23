@@ -16,3 +16,5 @@ python3 -m build
 python3 -m twine upload dist/*
 ```
 
+Before uploading to PyPI, make sure to update the version in `pyproject.toml`, delete old versions from dist/ folder, and use the API key from your PyPI account.
+

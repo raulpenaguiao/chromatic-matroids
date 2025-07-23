@@ -127,7 +127,7 @@ class SetComposition:
         """
         return SetComposition([a] + self.parts)
 
-    def relabel(self, relabeling_map: (None, list, tuple, dict[int:int])) -> 'SetComposition':
+    def relabel(self, relabeling_map: None | list | tuple | dict[int, int]) -> 'SetComposition':
         """
         Computes a new composition where each element is relabeled
         Does not change previous set composition
