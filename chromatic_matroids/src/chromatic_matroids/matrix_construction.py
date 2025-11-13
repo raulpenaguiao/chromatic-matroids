@@ -1,8 +1,8 @@
-from matroid_chromatic import schubert_matroid
-from matroid_chromatic import SetComposition
-from matroid_chromatic import stable_matroids_setcompositions
-from matroid_chromatic import generate_loopless_nested_matroids
-from matroid_chromatic import generate_nested_matroids_doublechains
+from .generate_matroids_utils import schubert_matroid
+from .setcompositions import SetComposition
+from .stable_matroids_setcompositions import stable_matroids_setcompositions
+from .generate_matroids_utils import generate_loopless_nested_matroids
+from .generate_matroids_utils import generate_nested_matroids_doublechains
 
 from itertools import chain, combinations, permutations
 

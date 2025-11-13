@@ -89,7 +89,7 @@ class Matroid:
         Returns:
             int: The rank of the subset
         """
-        return max([len([i for i in basis_set if i in subset]) for basis_set in self.basis_sets])
+        return max([len([i for i in basis_set if i in subset]) for basis_set in self.bases_sets])
     
     def independent_sets(self) -> Set[frozenset]:
         """

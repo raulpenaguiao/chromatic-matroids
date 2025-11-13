@@ -1,8 +1,8 @@
 # matroid_chromatic/utils.py
 from typing import Set, List, Tuple
-from matroid_chromatic import Matroid
+from .matroids import Matroid
 from itertools import combinations
-from matroid_chromatic.setcompositions import SetComposition
+from .setcompositions import SetComposition
 
 """
 Utility functions for creating various types of matroids.

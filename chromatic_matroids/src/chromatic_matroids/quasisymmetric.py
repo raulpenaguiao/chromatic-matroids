@@ -1,6 +1,6 @@
 # matroid_chromatic/quasisymmetric.py
 from typing import Set, List, Tuple
-from matroid_chromatic import Composition
+from .compositions import Composition
 
 class QSymFunction:
     def __init__(self, *args, **kwargs):

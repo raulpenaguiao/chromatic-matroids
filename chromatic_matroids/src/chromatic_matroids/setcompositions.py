@@ -1,7 +1,7 @@
 # matroid_chromatic/setcompositions.py
 from typing import Set, List, Tuple
 from itertools import combinations
-from matroid_chromatic.compositions import Composition
+from .compositions import Composition
 
 class SetComposition:
     """

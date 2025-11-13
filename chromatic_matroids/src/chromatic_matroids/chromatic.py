@@ -1,6 +1,6 @@
 # matroid_chromatic/chromatic.py
 from typing import Dict
-from matroid_chromatic import Matroid
+from .matroids import Matroid
 
 
 

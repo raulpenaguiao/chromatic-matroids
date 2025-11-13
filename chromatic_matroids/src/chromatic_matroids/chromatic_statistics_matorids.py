@@ -1,10 +1,10 @@
 # matroid_chromatic/chromatic_statistics_matorids.py
-from matroid_chromatic import Matroid
-from matroid_chromatic import SetComposition
-from matroid_chromatic import Composition
-from matroid_chromatic import QSymFunction
-from matroid_chromatic import NCQSymFunction
-from matroid_chromatic import stable_matroids_setcompositions
+from .matroids import Matroid
+from .setcompositions import SetComposition
+from .compositions import Composition
+from .quasisymmetric import QSymFunction
+from .ncquasisymmetric import NCQSymFunction
+from .stable_matroids_setcompositions import stable_matroids_setcompositions
 
 def chromatic_quasisymmetric_function(matroid: Matroid) -> QSymFunction:
     """

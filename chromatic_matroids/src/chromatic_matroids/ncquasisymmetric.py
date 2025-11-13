@@ -1,7 +1,7 @@
 # matroid_chromatic/ncquasisymmetric.py
 from typing import Set, List, Tuple
-from matroid_chromatic import SetComposition
-from matroid_chromatic import QSymFunction
+from .setcompositions import SetComposition
+from .quasisymmetric import QSymFunction
 
 class NCQSymFunction:
     def __init__(self, *args, **kwargs):

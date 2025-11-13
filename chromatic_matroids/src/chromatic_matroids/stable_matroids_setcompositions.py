@@ -1,6 +1,6 @@
 # matroid_chromatic/stable_matroids_setcompositions.py
-from matroid_chromatic import Matroid
-from matroid_chromatic import SetComposition
+from .matroids import Matroid
+from .setcompositions import SetComposition
 
 def stable_matroids_setcompositions(matroid: Matroid, opi: SetComposition) -> bool:
     """

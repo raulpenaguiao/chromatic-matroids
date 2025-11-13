@@ -1,5 +1,7 @@
 chromatic_matroids/dist/*
+chromatic_matroids/myenv/*
+chromatic_matroids/venv/*
 chromatic_matroids/src/chromatic_matroids/__pycache__/*
-chromatic_matroids/src/chromatic_matroids/test_script.py
 
 myenv/*
+venv/*
