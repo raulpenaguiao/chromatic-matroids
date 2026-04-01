@@ -80,16 +80,17 @@ class Matroid:
     def rank(self, subset: Set[int]) -> int:
         """
         Compute the rank of a subset.
-        
-        The rank is the size of the largest independent set contained in the subset.
-        
+
+        The rank is the size of the largest independent set contained in the subset,
+        equivalently the maximum intersection size of the subset with any basis.
+
         Args:
             subset (Set[int]): The subset to compute rank for
-            
+
         Returns:
             int: The rank of the subset
         """
-        return max([len([i for i in basis_set if i in subset]) for basis_set in self.bases_sets])
+        return max(sum(1 for i in basis_set if i in subset) for basis_set in self.bases_sets)
     
     def independent_sets(self) -> Set[frozenset]:
         """
@@ -115,31 +116,59 @@ class Matroid:
     def is_nested(self) -> bool:
         """
         Check if the matroid is nested.
-        
-        A matroid is nested if ***condition form Anna de Mier and Joseph Bonin***.
-        That is, if this matroid arises as a sequence of creating coloops and extensions.
-        
+
+        A matroid is nested (Bonin–de Mier) if and only if its lattice of flats
+        forms a chain: for any two flats F1 and F2, either F1 ⊆ F2 or F2 ⊆ F1.
+
+        A flat is a set F such that adding any element outside F strictly
+        increases the rank, i.e. r(F) < r(F ∪ {e}) for every e ∉ F.
+
         Returns:
             bool: True if the matroid is nested, False otherwise
         """
-        #TODO
-        return False
+        # Collect all flats of the matroid
+        flats = []
+        for subset in self._get_all_subsets(self.ground_set):
+            r_subset = self.rank(subset)
+            is_flat = all(
+                self.rank(subset | {e}) > r_subset
+                for e in self.ground_set
+                if e not in subset
+            )
+            if is_flat:
+                flats.append(subset)
+
+        # The matroid is nested iff its flats form a chain under inclusion
+        for i, f1 in enumerate(flats):
+            for f2 in flats[i + 1:]:
+                if not (f1.issubset(f2) or f2.issubset(f1)):
+                    return False
+        return True
     
-    def extend(self, elements: List[int]) -> 'Matroid':
+    def extend(self, element: int) -> 'Matroid':
         """
-        Extend the matroid by adding a collection of elements.
+        Extend the matroid by adding a new element as a coloop.
+
+        A coloop is an element that belongs to every basis. Adding a coloop
+        increases the rank of the matroid by 1. The new bases are exactly
+        {B ∪ {element} : B ∈ B(M)}.
+
+        This is the standard coloop (free-point) extension used when building
+        nested matroids inductively.
+
+        Args:
+            element (int): The new element to add. Must not already be in the ground set.
+
+        Returns:
+            Matroid: A new matroid with element added as a coloop.
+
+        Raises:
+            Exception: If element is already in the ground set.
         """
-        new_ground_set = frozenset(self.ground_set)
-        new_bases_sets = set(self.bases_sets)
-        
-        for element in elements:
-            if element in new_ground_set:
-                raise Exception("Element already in ground set")
-            new_ground_set = new_ground_set | {element}
-            for basis_set in new_bases_sets:
-                for i in basis_set: 
-                    if i in self.ground_set:
-                        new_bases_sets.add(frozenset(basis_set - {i} | {element}))
+        if element in self.ground_set:
+            raise Exception(f"Element {element} is already in the ground set")
+        new_ground_set = frozenset(self.ground_set | {element})
+        new_bases_sets = {frozenset(basis | {element}) for basis in self.bases_sets}
         return Matroid(new_ground_set, new_bases_sets)
     
 

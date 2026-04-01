@@ -206,8 +206,8 @@ def generate_nested_matroids_doublechains(d: int) -> List[tuple]:
     Returns:
         List[tuple]: A list of all double chains of rank d
     """
-    if d == 0 :
-        return [tuple(0, 0, tuple([frozenset([])]), tuple([0]))]
+    if d == 0:
+        return [(0, 0, (frozenset([]),), (0,))]
     result = []
 
     for opi in SetComposition.generate_all_setcompositions(d):
@@ -289,7 +289,6 @@ def graphic_matroid(edges: List[Tuple[int, int]], vertex_set: Set[int]) -> Matro
         Returns:
             bool: True if the edges form a forest, False if they contain a cycle
         """
-        print("Checking if edges", edge_subset, "form a forest")
         # Initialize parent array for union-find
         parent = {}
         rank = {}
@@ -374,5 +373,4 @@ def graphic_matroid(edges: List[Tuple[int, int]], vertex_set: Set[int]) -> Matro
     for edge_subset in combinations(ground_set, size):
         if is_cycle_free(edge_subset, ground_set):
             bases_sets.add(frozenset(edge_subset))
-    print("Defined graphic matroid with ground set", ground_set, "and bases", bases_sets)
     return Matroid(ground_set, bases_sets)

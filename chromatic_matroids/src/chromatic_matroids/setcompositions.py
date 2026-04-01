@@ -86,7 +86,7 @@ class SetComposition:
         if not len(self.parts) == len(other.parts):
             return False
         for part1, part2 in zip(self.parts, other.parts):
-            if not part1 == part1:
+            if not part1 == part2:
                 return False
         return True
 

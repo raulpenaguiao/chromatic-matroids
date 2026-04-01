@@ -1,55 +1,50 @@
 # matroid_chromatic/chromatic.py
-from typing import Dict
+from itertools import combinations
 from .matroids import Matroid
-
-
-
-def compute_chromatic_noncommutative_qsym_function(matroid: Matroid) -> dict:
-    """
-    Compute the non commutative qsym function as a dictionary that matches a 
-    """
-
 
 
 def compute_chromatic_polynomial(matroid: Matroid) -> list:
     """
-    Compute the chromatic polynomial as a list of coefficients.
-    
+    Compute the characteristic (chromatic) polynomial of a matroid.
+
+    Uses the subset-expansion formula:
+
+        χ(M, q) = Σ_{A ⊆ E} (-1)^|A| · q^(r(E) - r(A))
+
+    where E is the ground set, r is the rank function of M, and the sum
+    ranges over all subsets A of E (including the empty set).
+
+    The result is returned as a list of integer coefficients ``[c_0, c_1, ..., c_r]``
+    such that χ(M, q) = c_0 + c_1·q + c_2·q² + ... + c_r·q^r, where r = rank(M).
+
+    Examples
+    --------
+    For the uniform matroid U(2,1) the polynomial is q − 1::
+
+        compute_chromatic_polynomial(uniform_matroid(2, 1)) == [-1, 1]
+
+    For U(3,2) the polynomial is q² − 3q + 2 = (q−1)(q−2)::
+
+        compute_chromatic_polynomial(uniform_matroid(3, 2)) == [2, -3, 1]
+
     Args:
-        matroid: The matroid
-    
+        matroid (Matroid): A valid matroid object.
+
     Returns:
-        Value of chromatic polynomial at q
+        list[int]: Coefficient list ``[c_0, ..., c_r]`` where ``c_k`` is the
+                   coefficient of ``q^k`` in χ(M, q).
     """
-    def mobius_function(X: frozenset, Y: frozenset) -> int:
-        """Compute the Möbius function value."""
-        if X == Y:
-            return 1
-        if not X.issubset(Y):
-            return 0
-        
-        result = 0
-        for Z in range_sets[len(X):len(Y)]:
-            if X.issubset(Z) and Z.issubset(Y):
-                result -= mobius_function(X, Z)
-        return result
-    
-    # Generate all sets between empty set and ground set
-    range_sets = []
-    for i in range(len(matroid.ground_set) + 1):
-        current_level = set()
-        for ind_set in matroid.independent_sets():
-            if len(ind_set) == i:
-                current_level.add(ind_set)
-        range_sets.append(current_level)
-    
-    # Compute chromatic polynomial using Möbius inversion
-    result = [0 for _ in range(len(matroid.ground_set) + 1)]
-    empty_set = frozenset()
-    ground_set = frozenset(matroid.ground_set)
-    
-    for X in matroid.independent_sets():
-        coeff = mobius_function(empty_set, X)
-        result[len(X)] += coeff
-    
+    ground_list = list(matroid.ground_set)
+    n = len(ground_list)
+    rank = matroid.rank(matroid.ground_set)
+
+    result = [0] * (rank + 1)
+
+    for size in range(n + 1):
+        sign = (-1) ** size
+        for subset_tuple in combinations(ground_list, size):
+            subset = frozenset(subset_tuple)
+            exponent = rank - matroid.rank(subset)
+            result[exponent] += sign
+
     return result

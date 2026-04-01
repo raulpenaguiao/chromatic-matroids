@@ -5,3 +5,4 @@ chromatic_matroids/src/chromatic_matroids/__pycache__/*
 
 myenv/*
 venv/*
+.claude/*

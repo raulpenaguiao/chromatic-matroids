@@ -1,0 +1,70 @@
+In this project I want to create a couple of user interfaces so that we can create and manipulate matroids, compute its chromatic invariants and display them in a nice way.
+
+# Package
+This project will contain the python package, along with some instructions on how to create a package and how to isntall and use it. This will be in the folder chromatic_matroids.
+There, one will be able to find a README.md file on how to create the package using pip, with instructions like 
+
+```bash
+cd chromatic_matroids
+python3 -m venv venv
+pip install numpy
+source venv/bin/activate # On Windows, use `.\venv\Scripts\activate` -- do not type `source`
+python3 -m pip install --upgrade build
+python3 -m pip install twine
+python3 -m build
+python3 -m twine upload dist/*
+```
+
+This will also implement the test functions that should be ran upon creation of the package.
+
+The package has the following architecture:
+
+chromatic_matroids/
+├── src/
+│   ├── __init__.py
+│   ├── setcompositions.py
+│   ├── compositions.py
+│   ├── quasisymmetric_functions.py
+│   ├── noncommutative_quasisymmetric_functions.py
+│   ├── graphs.py
+│   ├── matroids.py
+│   ├── chromatic_invariants.py
+│   └── utils.py
+├── tests/
+│   ├── __init__.py
+│   ├── test_setcompositions.py
+│   ├── test_compositions.py
+│   ├── test_quasisymmetric_functions.py
+│   ├── test_noncommutative_quasisymmetric_functions.py
+│   ├── test_graphs.py
+│   ├── test_matroids.py
+│   ├── test_chromatic_invariants.py
+│   └── test_utils.py
+
+compositions.py will contain the functions to create and manipulate compositions, like merging, union, restriction etc, this will be useful to index the elements on the quasisymmetric_functions.py.
+setcompositions.py will contain the functions to create and manipulate set compositions, like merging, union, restriction etc, this will be useful to index the elements on the noncommutative_quasisymmetric_functions.py.
+quasisymmetric_functions.py will contain the functions to create and manipulate quasisymmetric functions, like create such an element of the monomial basis from a composition, adding two elements, multiplying two elements, extracting the coefficients of a given basis element.
+noncommutative_quasisymmetric_functions.py will contain the functions to create and manipulate non commutative quasisymmetric functions, like create such an element of the monomial basis from a composition, adding two elements, multiplying two elements, extracting the coefficients of a given basis element.
+graphs.py will contain functions to create and manipulate graphs with labels. Construct an empty graph from a list of vertices, construct a graph from a matrix of adjacency or a list of edges, etc. This will be useful to create graphical matroids, and to compute the chromatic symmetric function of a graph. It also computes restriction and contractions of edges.
+
+matroids.py will contain functions to create and manipulate matroids with labels. Contains a constructor that constructs the uniform matroid of a given size and rank, restriction and contraction of matroids as well as the graphical matroid.
+It contains methods for computing how many bases and circuits a matroid has, as well as the list of bases and circuits. The matroid structure will use a lazy evaluation, whereby the list of bases and circuits will only be computed when they are needed, and will be stored in the object for future use. This will allow us to compute the chromatic invariants of a matroid without having to compute all its bases and circuits, which can be very expensive for large matroids.
+
+chromatic_invariants.py will contain the functions to compute the chromatic symmetric function of a graph, the chromatic symmetric function of a matroid, the chromatic non-commutative symmetric function of a matroid, and the chromatic quasisymmetric function of a matroid.
+
+utils.py will contain functions that generate all nested matroids and schubert matroids up to a given size and rank.
+
+# Notebooks
+This project will also contain a folder with some Jupyter notebooks. The first one will be the test runs for each of the functions that are implemented in the package, with verbose outputs, even for the internal functions and methods.
+The second one is the display of the package public functions, with some examples of how to create a family of matroids that is relevant for the computation of the package (all nested matroids of a given size and rank, for instance, or all matroids that come from graphical matroids of a graph of size n and e edges).
+The third one is a display of the conjecture in the main paper, that will create matrices of size 6, all nested matroids of size 10 and rank 2, etc.
+
+# Browser
+Finally, I want to create a browser interface that will allow us to create and manipulate matroids, compute their chromatic invariants and display them in a nice way. This will be done using a web framework like Flask or Django, and will be hosted on a server so that it can be accessed from anywhere. The interface will allow users to input the parameters of the matroid they want to create, and will display the chromatic invariants in a user-friendly way.
+This folder will have a readme.md file with instructions on how to run the server and access the interface, along with some examples of how to use it.
+The interface will have a way to add a new matroid in several ways (Schuber matroid, by selecting the schubert set from a list, or gy a graphical matroid, by selecting the graph by clicking points and draging edges between points).
+This manages a list of matroids that are currently being analysed, the user can click on calculate to compute its chromatic invariants, and this will be displayed in both bases (non-commutative and commutative).
+All matroids are labelled, and to display a matroid will have a couple of important values (Size, rank, number of bases, number of circuits). On hovering, the list of bases and circuits will be displayed.
+
+
+
