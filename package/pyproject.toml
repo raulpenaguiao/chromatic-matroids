@@ -20,5 +20,8 @@ license = "MIT"
 license-files = ["LICENSE"]
 
 [project.urls]
-Homepage = "https://github.com/raulpenaguiao/chromatic-matroids/tree/main/chromatic_matroids"
-Issues = "https://github.com/raulpenaguiao/chromatic-matroids/tree/main/chromatic_matroids/issues"
+Homepage = "https://github.com/raulpenaguiao/chromatic-matroids/tree/main/package"
+Issues = "https://github.com/raulpenaguiao/chromatic-matroids/tree/main/package/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/chromatic_matroids"]

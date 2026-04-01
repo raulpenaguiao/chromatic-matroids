@@ -1,7 +1,8 @@
-chromatic_matroids/dist/*
-chromatic_matroids/myenv/*
-chromatic_matroids/venv/*
-chromatic_matroids/src/chromatic_matroids/__pycache__/*
+package/dist/*
+package/myenv/*
+package/venv/*
+package/src/chromatic_matroids/__pycache__/*
+notebooks/env/
 
 myenv/*
 venv/*

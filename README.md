@@ -29,25 +29,27 @@ The main research conjecture implemented here concerns the **rank of the chromat
 ## Package structure
 
 ```
-chromatic_matroids/
-├── src/
-│   └── chromatic_matroids/
-│       ├── __init__.py                        # public API
-│       ├── compositions.py                    # Composition class
-│       ├── setcompositions.py                 # SetComposition class
-│       ├── quasisymmetric.py                  # QSymFunction class
-│       ├── ncquasisymmetric.py                # NCQSymFunction class
-│       ├── matroids.py                        # Matroid class
-│       ├── generate_matroids_utils.py         # matroid generators
-│       ├── stable_matroids_setcompositions.py # stability check
-│       ├── chromatic_statistics_matorids.py   # chromatic functions
-│       ├── chromatic.py                       # chromatic polynomial
-│       └── matrix_construction.py            # conjecture matrices
-├── notebooks/
-│   ├── 00_unit_tests.ipynb                   # full test suite (verbose)
-│   ├── 01_comprehensive_api_guide.ipynb      # usage guide for every function
-│   └── 02_matrix_computation_examples.ipynb  # research computations
-└── pyproject.toml
+chromatic-matroids/               ← repo root
+├── package/                      ← installable Python package
+│   ├── src/
+│   │   └── chromatic_matroids/
+│   │       ├── __init__.py                        # public API
+│   │       ├── compositions.py                    # Composition class
+│   │       ├── setcompositions.py                 # SetComposition class
+│   │       ├── quasisymmetric.py                  # QSymFunction class
+│   │       ├── ncquasisymmetric.py                # NCQSymFunction class
+│   │       ├── matroids.py                        # Matroid class
+│   │       ├── generate_matroids_utils.py         # matroid generators
+│   │       ├── stable_matroids_setcompositions.py # stability check
+│   │       ├── chromatic_statistics_matorids.py   # chromatic functions
+│   │       ├── chromatic.py                       # chromatic polynomial
+│   │       └── matrix_construction.py            # conjecture matrices
+│   └── pyproject.toml
+└── notebooks/                    ← all Jupyter notebooks
+    ├── 00_unit_tests.ipynb       # full test suite (verbose)
+    ├── 01_comprehensive_api_guide.ipynb  # usage guide for every function
+    ├── 02_matrix_computation_examples.ipynb  # research computations
+    └── 03_min_max_conjecture_testing.ipynb   # min-max conjecture
 ```
 
 ---
@@ -63,20 +65,17 @@ pip install chromatic-matroids
 ### Local development install
 
 ```bash
-cd chromatic_matroids
-python3 -m venv venv
-# Windows:  .\venv\Scripts\activate
-source venv/bin/activate
-pip install numpy
-pip install . --force-reinstall
+pip install -e package
 pip install jupyter          # to run notebooks
 ```
+
+No virtual environment setup is required — use your system Python or any existing environment.
+The `-e` flag makes the install editable: changes to files in `package/src/` are reflected immediately without reinstalling.
 
 ### Build and upload to PyPI
 
 ```bash
-cd chromatic_matroids
-source venv/bin/activate
+cd package
 python3 -m pip install --upgrade build twine
 python3 -m build
 python3 -m twine upload dist/*
@@ -89,12 +88,12 @@ Before uploading: bump the version in `pyproject.toml` and delete stale files fr
 ## Running the notebooks
 
 ```bash
-cd chromatic_matroids
-source venv/bin/activate    # or .\venv\Scripts\activate on Windows
-jupyter notebook
+pip install -e package       # install from local sources (once)
+pip install jupyter
+jupyter notebook notebooks/
 ```
 
-Open `notebooks/00_unit_tests.ipynb` for the test suite, or `notebooks/01_comprehensive_api_guide.ipynb` for usage examples.
+All notebooks are in the root `notebooks/` folder. Each notebook has a first cell that installs the package from local sources automatically, so you can also just open the notebook and run all cells without any prior setup.
 
 ---
 
@@ -333,7 +332,7 @@ generate_min_max_set_compositions(d)
 | `notebooks/00_unit_tests.ipynb` | Full test suite. Run top-to-bottom: every cell uses `assert` and prints verbose output. A clean run means all tests pass. |
 | `notebooks/01_comprehensive_api_guide.ipynb` | Usage guide for every public function with printed output. |
 | `notebooks/02_matrix_computation_examples.ipynb` | Research: rank computations, dimension sweeps, conjecture matrices. |
-| `notebooks/03_min_max_conjecture_testing.ipynb` *(outer `notebooks/`)* | Research: conjecture 1 and 2 (min-max matrix non-singularity). |
+| `notebooks/03_min_max_conjecture_testing.ipynb` | Research: conjecture 1 and 2 (min-max matrix non-singularity). |
 
 ---
 
@@ -352,4 +351,4 @@ Contributions and issue reports are welcome at the project repository.
 
 ## License
 
-MIT License — see `chromatic_matroids/LICENSE`.
+MIT License — see `package/LICENSE`.
