@@ -7,3 +7,10 @@ notebooks/env/
 myenv/*
 venv/*
 .claude/*
+chromatic_matroids/dist/*
+*__pycache__*
+*/venv/*
+venv/*
+package/*
+.claude/*
+*/src/*
