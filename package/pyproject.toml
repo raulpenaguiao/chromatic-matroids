@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "chromatic_matroids"
-version = "1.0.0"
+version = "1.0.1"
 authors = [
   { name="Raul Penaguiao", email="raul.penaguiao@proton.me" },
   { name="Sophie Rehberg", email="" },
