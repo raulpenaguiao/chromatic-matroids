@@ -27,10 +27,11 @@ def test_leading_coefficient_is_one():
 
 
 def test_k3_chromatic_polynomial():
-    # χ(K_3, q) = q(q-1)(q-2) = q^3 - 3q^2 + 2q → [0, 2, -3, 1]
+    # Matroid characteristic polynomial of M(K_3): χ(M, q) = (q-1)(q-2) = q^2 - 3q + 2
+    # (The graph chromatic polynomial P(K_3, q) = q·χ(M,q) = q(q-1)(q-2), which differs by a factor of q.)
     m = graphic_matroid([(1, 2), (1, 3), (2, 3)], {1, 2, 3})
     poly = compute_chromatic_polynomial(m)
-    assert len(poly) == 3  # degree = rank(K_3) = 2  → poly len 3
+    assert poly == [2, -3, 1]
 
 
 def test_returns_list():
@@ -39,9 +40,8 @@ def test_returns_list():
 
 
 def test_free_matroid_polynomial():
-    # U(3,3): only one basis {1,2,3}, χ(q) = (q-1)^3 ... wait
-    # Actually for free matroid (rank = n), χ(M,q) = product_{i=0}^{n-1}(q - i)?
-    # Just verify degree equals rank
+    # U(3,3): all subsets are independent, so r(A) = |A| for all A.
+    # χ(q) = Σ_{A} (-1)^|A| q^{3-|A|} = (q-1)^3 = q^3 - 3q^2 + 3q - 1
     m = uniform_matroid(3, 3)
     poly = compute_chromatic_polynomial(m)
-    assert len(poly) == 4  # degree 3
+    assert poly == [-1, 3, -3, 1]

@@ -36,11 +36,32 @@ def test_ncqsym_coefficients_positive(u21):
         assert v > 0
 
 
+def test_u32_ncqsym_terms(u32):
+    # U(3,2): 9 stable set compositions, all with coefficient 1.
+    # Each total order on {1,2,3} is stable (unique max-weight basis); the three
+    # two-block set compositions with a singleton first block are also stable.
+    nc = chromatic_non_commutative_quasisymmetric_function(u32)
+    expected = {
+        '(1|2|3)', '(1|3|2)', '(2|1|3)', '(2|3|1)', '(3|1|2)', '(3|2|1)',
+        '(1|2,3)', '(2|1,3)', '(3|1,2)',
+    }
+    assert set(nc.coefficients.keys()) == expected
+    for v in nc.coefficients.values():
+        assert v == 1
+
+
 # --- chromatic_quasisymmetric_function ---
 
 def test_u21_qsym(u21):
     c = chromatic_quasisymmetric_function(u21)
     assert c.coefficients == {'(1,1)': 2}
+
+
+def test_u32_qsym(u32):
+    # U(3,2) QSym: 6 total orders (all stable) collapse under comu to (1,1,1) with coeff 6;
+    # 3 two-block compositions collapse to (1,2) with coeff 3.
+    c = chromatic_quasisymmetric_function(u32)
+    assert c.coefficients == {'(1,1,1)': 6, '(1,2)': 3}
 
 
 def test_u21_qsym_returns_qsym(u21):

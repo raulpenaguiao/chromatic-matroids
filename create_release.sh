@@ -34,3 +34,4 @@ git push origin main
 git tag "$tag"
 git push origin "$tag"
 echo "Pushed tag $tag — release CI triggered"
+echo "Watch progress at: https://github.com/raulpenaguiao/chromatic-matroids/actions"
