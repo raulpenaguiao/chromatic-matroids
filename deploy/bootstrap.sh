@@ -15,7 +15,7 @@
 set -euo pipefail
 
 # ── Config ────────────────────────────────────────────────────────────────────
-DEPLOY_USER="${DEPLOY_USER:-penegas}"
+DEPLOY_USER="${DEPLOY_USER:-root}"
 APP_DIR="/var/www/chromatic-matroids"
 REPO_URL="https://github.com/raulpenaguiao/chromatic-matroids.git"
 SERVICE="chromatic-matroids"
