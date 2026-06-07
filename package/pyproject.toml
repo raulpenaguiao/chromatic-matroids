@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "chromatic_matroids"
-version = "0.0.4"
+version = "0.1.0"
 authors = [
   { name="Raul Penaguiao", email="raul.penaguiao@proton.me" },
   { name="Sophie Rehberg", email="" },
@@ -25,3 +25,9 @@ Issues = "https://github.com/raulpenaguiao/chromatic-matroids/tree/main/package/
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/chromatic_matroids"]
+
+[project.optional-dependencies]
+test = ["pytest", "numpy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,17 @@
+[Unit]
+Description=Chromatic Matroids – Flask/Gunicorn
+After=network.target
+
+[Service]
+Type=simple
+User=penegas
+WorkingDirectory=/var/www/chromatic-matroids
+ExecStart=/var/www/chromatic-matroids/.venv/bin/gunicorn \
+    --bind 127.0.0.1:5001 \
+    --workers 1 \
+    frontend.wsgi:application
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

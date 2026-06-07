@@ -1,0 +1,52 @@
+name: Release to PyPI
+
+on:
+  push:
+    tags:
+      - 'release-[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  test-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # required for trusted publishing
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install package and test dependencies
+        run: pip install -e "package[test]"
+
+      - name: Run tests
+        run: pytest package/tests/ -v
+        working-directory: ${{ github.workspace }}
+
+      - name: Check tag version matches pyproject.toml
+        run: |
+          TAG="${GITHUB_REF_NAME}"           # e.g. release-1.0.1
+          TAG_VERSION="${TAG#release-}"      # strip "release-" prefix → 1.0.1
+          PKG_VERSION=$(python3 -c "
+          import tomllib
+          with open('package/pyproject.toml', 'rb') as f:
+              print(tomllib.load(f)['project']['version'])
+          ")
+          echo "Tag version:     $TAG_VERSION"
+          echo "Package version: $PKG_VERSION"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "ERROR: tag version ($TAG_VERSION) does not match package version ($PKG_VERSION)"
+            exit 1
+          fi
+
+      - name: Build package
+        run: |
+          pip install build --quiet
+          python3 -m build package/ --outdir dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/

@@ -47,8 +47,8 @@ class Matroid:
                         if not(i in B1):
                             for j in B1:
                                 if not(j in B2):
-                                    #Check if B2 + j - i is a basis
-                                    B = frozenset(B2 | {i} - {j})
+                                    #Check if (B1 - {j}) + {i} is a basis
+                                    B = frozenset((B1 - {j}) | {i})
                                     if B in self.bases_sets:#Check condition
                                         exchange_exists = True
                                 if exchange_exists:

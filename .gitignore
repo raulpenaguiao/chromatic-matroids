@@ -1,16 +1,15 @@
 package/dist/*
 package/myenv/*
 package/venv/*
-package/src/chromatic_matroids/__pycache__/*
 notebooks/env/
 
 myenv/*
 venv/*
-.claude/*
+.venv/
+**/.claude/
 chromatic_matroids/dist/*
 *__pycache__*
 */venv/*
 venv/*
-package/*
-.claude/*
-*/src/*
+.pytest_cache/
+*.egg-info/

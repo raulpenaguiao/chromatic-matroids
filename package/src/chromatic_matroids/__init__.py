@@ -10,6 +10,12 @@ from .setcompositions import SetComposition
 from .ncquasisymmetric import NCQSymFunction
 from .stable_matroids_setcompositions import stable_matroids_setcompositions
 from .chromatic_statistics_matorids import chromatic_quasisymmetric_function, chromatic_non_commutative_quasisymmetric_function
+from .lattice_statistics import (
+    smith_normal_form_factors,
+    z_rank,
+    z_index,
+    invariant_factors,
+)
 from .matrix_construction import (
     from_set_to_set_composition,
     generate_valid_subsets,
@@ -47,4 +53,8 @@ __all__ = [
     'compute_conjecture_alternatingsum_matrix',
     'min_max_set_composition',
     'generate_min_max_set_compositions',
+    'smith_normal_form_factors',
+    'z_rank',
+    'z_index',
+    'invariant_factors',
 ]

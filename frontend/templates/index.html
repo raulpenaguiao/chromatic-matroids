@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chromatic Matroids</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header>
+  <h1>Chromatic Matroids</h1>
+</header>
+
+<div class="toolbar">
+  <span class="toolbar-label">On selection:</span>
+  <button class="btn-primary" onclick="App.computeQSym(this)">QSym (M basis)</button>
+  <button class="btn-primary" onclick="App.computeWQSym(this)">WQSym (M basis)</button>
+  <button class="btn-primary" onclick="App.computeZRank(this)">Z-rank</button>
+  <button class="btn-primary has-tooltip" onclick="App.computeZIndex(this)"
+    data-tooltip="Smith Normal Form of the WQSym matrix A = UDV&#10;U, V: unimodular integer matrices&#10;D = diag(d&#8321; | d&#8322; | &#8230; | d&#7523; | 0 &#8230; 0),  each d&#7522; | d&#7522;&#8330;&#8321;&#10;Z-index = d&#8321; &#183; d&#8322; &#183; &#8230; &#183; d&#7523; = [sat(M) : M]&#10;sat(M) = { x &#8712; &#8484;&#7472; : cx &#8712; M for some c &gt; 0 }&#10;Z-index = 1  &#8660;  M is saturated">Z-index</button>
+  <button class="btn-secondary" onclick="App.clearResults()">Clear results</button>
+</div>
+
+<div class="main">
+
+  <section class="matroids-panel">
+    <div class="panel-header">
+      <h2>Matroids</h2>
+      <button class="btn-add" onclick="Modal.showAdd()">+ Add</button>
+    </div>
+    <div class="panel-subheader">
+      <label class="select-all-label">
+        <input type="checkbox" id="select-all-cb" onchange="App.toggleSelectAll(this.checked)">
+        Select all
+      </label>
+      <div class="subheader-actions">
+        <button class="btn-sm btn-secondary" id="dedupe-btn" onclick="App.clearIsomorphic()">Clear duplicates</button>
+        <button class="btn-sm btn-secondary" onclick="App.exportJSON()">Export JSON</button>
+        <button class="btn-sm btn-danger" onclick="App.clearSelected()">Clear selected</button>
+        <button class="btn-sm btn-danger" onclick="App.clearAll()">Clear all</button>
+      </div>
+    </div>
+    <div id="matroid-list"></div>
+  </section>
+
+  <section class="results-panel">
+    <h2>Results</h2>
+    <div id="results-content" class="results-placeholder">
+      Select matroids and click an operation above.
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══════════════════════════  ADD MODAL  ══════════════════════════════ -->
+<div id="modal-add" class="modal-backdrop hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Matroid</h3>
+      <button class="btn-close" onclick="Modal.close('modal-add')">✕</button>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="uniform">Uniform</button>
+      <button class="tab" data-tab="nested">Nested</button>
+      <button class="tab" data-tab="schubert">Schubert</button>
+      <button class="tab" data-tab="graphic">Graphic</button>
+      <button class="tab" data-tab="matrix">Matrix</button>
+      <button class="tab" data-tab="custom">Custom bases</button>
+    </div>
+
+    <!-- Uniform -->
+    <div id="tab-uniform" class="tab-content">
+      <label>n (ground set size) <input id="u-n" type="number" min="0" value="3"></label>
+      <label>r (rank) <input id="u-r" type="number" min="0" value="2"></label>
+      <p class="hint">Creates U(n,r): all r-subsets of {1,…,n} are bases.</p>
+      <button class="btn-primary" onclick="App.addUniform()">Add U(n,r)</button>
+    </div>
+
+    <!-- Nested -->
+    <div id="tab-nested" class="tab-content hidden">
+      <div class="row-inputs">
+        <label>n <input id="ne-n" type="number" min="1" value="4"></label>
+        <label>rank <input id="ne-rank" type="number" min="0" value="2"></label>
+      </div>
+      <p class="hint">
+        <b>Layers</b> — one line per chain level, comma-separated elements (incremental, not cumulative).<br>
+        The last layer must contain all remaining elements so that ∪layers = {1,…,n}.<br>
+        <b>Rank bounds</b> — one integer per layer, strictly increasing, last value = rank.<br>
+        Example: layers <code>1,2 / 3,4</code>, bounds <code>1,2</code>
+        gives ne(4, r=2, X₁={1,2}, X₂={1,2,3,4}, R=(1,2)).
+      </p>
+      <label>Layers (one per line)
+        <textarea id="ne-layers" rows="3" placeholder="1,2&#10;3,4"></textarea>
+      </label>
+      <label>Rank bounds (comma-separated)
+        <input id="ne-ranks" type="text" placeholder="1,2">
+      </label>
+      <div class="nested-btns">
+        <button class="btn-primary" onclick="App.addNested()">Add this matroid</button>
+        <button class="btn-secondary" onclick="App.addAllLooplessNested()">All loopless (size n)</button>
+        <button class="btn-secondary" onclick="App.addAllLooplessNestedByRank()">All loopless (n, rank r)</button>
+      </div>
+    </div>
+
+    <!-- Schubert -->
+    <div id="tab-schubert" class="tab-content hidden">
+      <div class="row-inputs">
+        <label>n <input id="sc-n" type="number" min="1" value="4"></label>
+        <label>rank <input id="sc-rank" type="number" min="0" value="2"></label>
+      </div>
+      <p class="hint">
+        sh({1,…,n}, A): B = {b₁&lt;…&lt;bᵣ} is a basis iff bᵢ ≤ aᵢ for all i.
+      </p>
+      <div class="nested-btns">
+        <button class="btn-primary"   onclick="App.addSchubertByRank()">All sh(n, rank r)</button>
+        <button class="btn-secondary" onclick="App.addAllSchubert()">All sh(n)</button>
+      </div>
+    </div>
+
+    <!-- Graphic -->
+    <div id="tab-graphic" class="tab-content hidden">
+      <p class="hint">
+        <b>Click</b> on empty space to add a vertex.<br>
+        <b>Drag</b> from one vertex to another to add an edge.<br>
+        <b>Right-click</b> a vertex or edge to delete it.
+      </p>
+      <canvas id="graph-canvas" width="420" height="300"></canvas>
+      <div class="graph-controls">
+        <button class="btn-secondary" onclick="App.clearGraph()">Clear graph</button>
+        <button class="btn-primary" onclick="App.addGraphic()">Add M(G)</button>
+      </div>
+    </div>
+
+    <!-- Matrix -->
+    <div id="tab-matrix" class="tab-content hidden">
+      <label>Label <input id="mat-label" type="text" placeholder="e.g. M" value="M"></label>
+      <label>Matrix — one row per line, values space- or comma-separated
+        <textarea id="mat-input" rows="5" placeholder="1 0 1&#10;0 1 1"></textarea>
+      </label>
+      <p class="hint">
+        Columns are the ground set {1,…,n}. Bases = maximal linearly independent column sets (over ℝ).
+      </p>
+      <button class="btn-primary" onclick="App.addFromMatrix()">Add column matroid</button>
+    </div>
+
+    <!-- Custom bases -->
+    <div id="tab-custom" class="tab-content hidden">
+      <label>Label <input id="c-label" type="text" placeholder="e.g. M" value="M"></label>
+      <label>Ground set (comma-separated integers)
+        <input id="c-ground" type="text" placeholder="1,2,3,4">
+      </label>
+      <label>Bases (one per line, comma-separated integers)
+        <textarea id="c-bases" rows="5" placeholder="1,2&#10;1,3&#10;2,3"></textarea>
+      </label>
+      <button class="btn-primary" onclick="App.addCustom()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════  ELEMENT SELECT MODAL  ══════════════════════ -->
+<div id="modal-elements" class="modal-backdrop hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-elements-title">Select elements</h3>
+      <button class="btn-close" onclick="Modal.close('modal-elements')">✕</button>
+    </div>
+    <p class="hint" id="modal-elements-hint"></p>
+    <div id="modal-elements-boxes" class="checkbox-grid"></div>
+    <div class="modal-action-row">
+      <button class="btn-primary" id="modal-elements-btn-new">Add as new</button>
+      <button class="btn-secondary" id="modal-elements-btn-replace">Replace current</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════  DIRECT SUM MODAL  ══════════════════════════ -->
+<div id="modal-directsum" class="modal-backdrop hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-ds-title">Direct sum with…</h3>
+      <button class="btn-close" onclick="Modal.close('modal-directsum')">✕</button>
+    </div>
+    <p class="hint">Ground sets are relabelled automatically so they are disjoint.</p>
+    <div id="modal-ds-list" class="radio-list"></div>
+    <button class="btn-primary" id="modal-ds-btn">Add M₁ ⊕ M₂</button>
+  </div>
+</div>
+
+<!-- ════════════════════════  INSPECT BASES MODAL  ═══════════════════════ -->
+<div id="modal-bases" class="modal-backdrop hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-bases-title">Bases</h3>
+      <button class="btn-close" onclick="Modal.close('modal-bases')">✕</button>
+    </div>
+    <div id="modal-bases-content" class="bases-list"></div>
+  </div>
+</div>
+
+<!-- inject URL prefix so JS never has to guess it -->
+<script>const CM_BASE = "{{ url_for('app.index') }}".replace(/\/$/, "");</script>
+<script src="{{ url_for('static', filename='graph_editor.js') }}"></script>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

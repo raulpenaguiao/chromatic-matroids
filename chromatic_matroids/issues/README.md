@@ -1,1 +1,0 @@
-For issues and feedback related to this package send me an e-mail
