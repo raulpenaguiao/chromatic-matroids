@@ -19,18 +19,18 @@ fi
 
 tag="release-$new_version"
 
-if git rev-parse "$tag" >/dev/null 2>&1; then
-    echo "Error: tag $tag already exists"
-    exit 1
+if [ "$current" != "$new_version" ]; then
+    sed -i "s/^version = \"$current\"/version = \"$new_version\"/" "$PYPROJECT"
+    echo "Updated $PYPROJECT: $current → $new_version"
+    git add "$PYPROJECT"
+    git commit -m "Bump version to $new_version"
+    git push origin main
+else
+    echo "Version unchanged ($current), skipping commit"
 fi
 
-sed -i "s/^version = \"$current\"/version = \"$new_version\"/" "$PYPROJECT"
-echo "Updated $PYPROJECT: $current → $new_version"
-
-git add "$PYPROJECT"
-git commit -m "Bump version to $new_version"
-git push origin main
-
+git push origin --delete "$tag" 2>/dev/null || true
+git tag -d "$tag" 2>/dev/null || true
 git tag "$tag"
 git push origin "$tag"
 echo "Pushed tag $tag — release CI triggered"
