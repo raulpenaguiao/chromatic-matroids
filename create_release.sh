@@ -24,10 +24,9 @@ if [ "$current" != "$new_version" ]; then
     echo "Updated $PYPROJECT: $current → $new_version"
     git add "$PYPROJECT"
     git commit -m "Bump version to $new_version"
-    git push origin main
-else
-    echo "Version unchanged ($current), skipping commit"
 fi
+
+git push origin main
 
 git push origin --delete "$tag" 2>/dev/null || true
 git tag -d "$tag" 2>/dev/null || true
