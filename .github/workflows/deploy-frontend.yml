@@ -19,15 +19,24 @@ jobs:
           port: ${{ secrets.VPS_SSH_PORT || 22 }}
           script: |
             set -euo pipefail
-            if [ ! -d /var/www/chromatic-matroids ]; then
-              git clone https://github.com/raulpenaguiao/chromatic-matroids.git /var/www/chromatic-matroids
-              python3 -m venv /var/www/chromatic-matroids/.venv
+            DEPLOY_DIR=/var/www/chromatic-matroids
+            SERVICE=chromatic-matroids
+
+            if [ ! -d "$DEPLOY_DIR" ]; then
+              git clone https://github.com/raulpenaguiao/chromatic-matroids.git "$DEPLOY_DIR"
+              python3 -m venv "$DEPLOY_DIR/.venv"
             fi
-            cd /var/www/chromatic-matroids
+
+            cd "$DEPLOY_DIR"
             git fetch origin
             git checkout main
             git pull origin main
+
             source .venv/bin/activate
             pip install -e package flask gunicorn numpy --quiet
-            sudo systemctl restart chromatic-matroids
+
+            sudo tee /etc/systemd/system/$SERVICE.service < "$DEPLOY_DIR/$SERVICE.service" > /dev/null
+            sudo systemctl daemon-reload
+            sudo systemctl enable "$SERVICE"
+            sudo systemctl restart "$SERVICE"
             echo "Deploy complete"

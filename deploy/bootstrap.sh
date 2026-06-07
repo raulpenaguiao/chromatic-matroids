@@ -60,13 +60,18 @@ rm -f /etc/nginx/sites-enabled/default
 nginx -t
 systemctl reload nginx
 
-echo "=== 7/7  Sudoers (passwordless restarts for $DEPLOY_USER) ==="
+echo "=== 7/7  Sudoers (passwordless service management for $DEPLOY_USER) ==="
 cat > /etc/sudoers.d/chromatic-matroids << EOF
 $DEPLOY_USER ALL=(ALL) NOPASSWD: \\
+    /bin/systemctl daemon-reload, \\
+    /usr/bin/systemctl daemon-reload, \\
+    /bin/systemctl enable $SERVICE, \\
+    /usr/bin/systemctl enable $SERVICE, \\
     /bin/systemctl restart $SERVICE, \\
     /usr/bin/systemctl restart $SERVICE, \\
     /bin/systemctl reload nginx, \\
-    /usr/bin/systemctl reload nginx
+    /usr/bin/systemctl reload nginx, \\
+    /usr/bin/tee /etc/systemd/system/$SERVICE.service
 EOF
 chmod 440 /etc/sudoers.d/chromatic-matroids
 

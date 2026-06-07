@@ -1,222 +1,267 @@
-# Chromatic matroids Package
+# chromatic-matroids
 
-To install the package
+A self-contained Python library for computing chromatic invariants of matroids.
+No CAS required; the only runtime dependency is NumPy.
+
 ```bash
 pip install chromatic-matroids
 ```
 
-Running the following should work:
-```python3
-from chromatic_matroids.compositions import Composition
-comp1 = Composition([1, 2, 1])
+---
+
+## Table of contents
+
+1. [Quick start](#quick-start)
+2. [Matroids](#matroids)
+3. [Compositions and set compositions](#compositions-and-set-compositions)
+4. [Quasi-symmetric functions](#quasi-symmetric-functions)
+5. [Word quasi-symmetric functions (WQSym / NCQSym)](#word-quasi-symmetric-functions)
+6. [Chromatic invariants](#chromatic-invariants)
+7. [Lattice statistics](#lattice-statistics)
+8. [Running the tests](#running-the-tests)
+
+---
+
+## Quick start
+
+```python
+from chromatic_matroids import (
+    uniform_matroid,
+    chromatic_quasisymmetric_function,
+    chromatic_non_commutative_quasisymmetric_function,
+    compute_chromatic_polynomial,
+    z_rank, z_index,
+)
+
+m = uniform_matroid(3, 2)                         # U(3,2)
+print(compute_chromatic_polynomial(m))            # [2, -3, 1]  →  (q-1)(q-2)
+print(chromatic_quasisymmetric_function(m).coefficients)
+# {'(1,1,1)': 6, '(1,2)': 3}
+print(chromatic_non_commutative_quasisymmetric_function(m).coefficients)
+# {'(1|2|3)': 1, '(1|3|2)': 1, ...}  (9 terms, all coefficient 1)
 ```
 
-# Overview
-This package is part of a matroid library that provides tools for working with matroids and their chromatic invariants.
-It includes various combinatorial structures and operations for the study of matroids, such as compositions, set compositions, quasi-symmetric functions, word quasi-symmetric functions, graphs, and chromatic functions on matroids.
+---
 
-This is done in a self-contained way so that it can be used independently of typical libraries like sagemath or sympy.
-I also allows for building up examples of matroids and its corresponding chromatic invariants without the need for external libraries.
+## Matroids
 
-## Classes and objects
+### Constructors
 
-### Compositions - file compositions.py
+```python
+from chromatic_matroids import (
+    Matroid,
+    uniform_matroid, schubert_matroid, nested_matroid, graphic_matroid,
+)
 
-This package implements a construction of compositions.
-Accessible is the constructor `Composition` and the method `generate_all_composition`.
-There are also methods for manipulating compositions, such as `rest` and `prepend`.
-These objects can be printed with a user-friendly representation.
-For a construction example, run the following:
+# Explicit bases
+m = Matroid(frozenset([1, 2, 3]), {frozenset([1, 2]), frozenset([1, 3]), frozenset([2, 3])})
 
-```python3
-from chromatic_matroids.compositions import Composition
-comp1 = Composition([1, 2, 1])
-comp2 = Composition([2, 1])
-print(f"Basic compositions: {comp1}, {comp2}")
-print("")
+# U(n, r): all r-subsets of {1, …, n} are bases
+u = uniform_matroid(4, 2)
 
-print("Composition Operations")
-print(f"Rest of {comp1}: {comp1.rest()}")
-print(f"Prepending 3 to {comp2}: {comp2.prepend(3)}")
-print("")
+# Schubert matroid sh({1,…,n}, A): B = {b₁<…<bᵣ} is a basis iff bᵢ ≤ aᵢ for all i
+s = schubert_matroid(4, frozenset([2, 3]))
 
-print("Generate all compositions of size 4")
-comps = Composition.generate_all_composition(4)
-print(f"All compositions of 4: {comps}")
+# Nested matroid: chain of flats X₁ ⊂ X₂ ⊂ … with rank bounds
+ne = nested_matroid(4, 2,
+    (frozenset({1, 2}), frozenset({1, 2, 3, 4})),
+    (1, 2))
+
+# Graphic matroid: ground set = edges, bases = spanning forests
+K3 = graphic_matroid([(1, 2), (1, 3), (2, 3)], {1, 2, 3})
 ```
 
+The `Matroid` constructor validates the basis exchange axiom and raises if the input is invalid.
 
-### Set compositions - file setcompositions.py
+### Methods
 
-This package implements a construction of set compositions.
-Accessible is the constructor `SetComposition` and the method `generate_all_set_composition`.
-There are also methods for manipulating set compositions, such as `rest(self) -> 'SetComposition'` and `prepend(self, a: frozenset[int]) -> 'SetComposition'`.
-It exposes a method `first(self) -> frozenset[int]` that returns the first part of the set composition, if it exists, raising an error if it does not exist (_i.e._ the original set composition is empty).
-It exposes a method `relabel(self, relabeling_map: (None, list, tuple, dict[int:int])) -> 'SetComposition'` that allows for changing the basis set of a set composition.
-It exposes a method `alpha(self) -> Composition` that allows for computing the underlying composition.
-Finally, this package exposes a static method `def quasi_shuffles(q: 'SetComposition', t: 'SetComposition') -> dict[str:int]`, that computes the quasi-shuffles of two set compositions.
-These objects can be printed with a user-friendly representation.
-For an example, run the following:
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `m.rank(S)` | `int` | Rank of a subset S |
+| `m.independent_sets()` | `set[frozenset]` | All independent sets |
+| `m.is_nested()` | `bool` | True if m is a nested matroid |
+| `m.extend(e)` | `Matroid` | Add e as a coloop |
+| `m.relabel(bij)` | `Matroid` | Relabel ground set via bijection dict |
 
-```python3
-from chromatic_matroids.setcompositions import SetComposition
-print("Example 13: SetComposition Operations")
-set_comp1 = SetComposition([[1, 2], [3, 4], [5]])
-set_comp2 = SetComposition([[6], [7, 8]])
-print(f"Set Compositions: {set_comp1}, {set_comp2}")
-print(f"Quasi-shuffles: {SetComposition.quasi_shuffles(set_comp1, set_comp2)}")
+### Generators
+
+```python
+from chromatic_matroids import (
+    generate_schubert_matroids,            # all 2^n Schubert matroids on {1,…,n}
+    generate_loopless_schubert_matroids,   # loopless subset
+    generate_loopless_nested_matroids,     # all n! loopless nested matroids on {1,…,n}
+    generate_nested_matroids_doublechains, # nested matroids from double chains
+)
+
+matroids = generate_loopless_nested_matroids(4)  # 24 matroids
 ```
 
+---
 
-### Quasi-symmetric functions
+## Compositions and set compositions
 
-This package implements a construction of quasi-symmetric functions.
-Accessible is the constructor `QSymFunction` with keyword argument `monomial_basis`, that takes a dictionary `dict[Composition:int]` or a tuple `(str, Composition)` or a single `Composition` or no argument at all.
-It also exposes basic arithmetic operations such as addition and multiplication.
-It allows for printing the coefficients in a user-friendly way.
+### Composition
 
-For a construction example, run the following:
-```python3
-from chromatic_matroids.quasisymmetric import QSymFunction
-from chromatic_matroids.compositions import Composition
-print("Construct QSymFunction from a dictionary of monomial bases")
-qsym_from_dict = QSymFunction(monomial_basis={"(1,2,1)": 2, "(2,1)": -1})
-qsym_from_tuple = QSymFunction(monomial_basis=(Composition([1,2,1]), 2))
-qsym_empty = QSymFunction()
-print("QSymFunction from dictionary:")
-print(f"Dictionary coefficients: {qsym_from_dict.coefficients}")
-print(f"Tuple coefficients: {qsym_from_tuple.coefficients}")
-print(f"Empty coefficients: {qsym_empty.coefficients}")
-print(f"Product coefficients: {(qsym_from_tuple * qsym_from_dict).coefficients}")
+A composition of n is an ordered list of positive integers summing to n.
+
+```python
+from chromatic_matroids import Composition
+
+c = Composition([2, 1, 3])   # parts=[2,1,3], n=6
+c = Composition("(2,1,3)")   # from string repr
+
+c.rest()        # Composition([1, 3])
+c.prepend(4)    # Composition([4, 2, 1, 3])
+
+Composition.generate_all_composition(4)  # all 2^(n-1) compositions, cached
+Composition.quasi_shuffles(Composition([1]), Composition([1]))
+# {'(2)': 1, '(1,1)': 2}
 ```
 
-### Word quasi-symmetric functions
+### SetComposition
 
-This package implements a construction of word quasi-symmetric functions.
-For a construction example, run the following:
-```
-print("Construct NCQSymFunctions from a dictionary of monomial bases")
-nc_f = NCQSymFunction(monomial_basis=set_comp1)
-nc_g = NCQSymFunction(monomial_basis=set_comp2)
-nc_sum = nc_f + nc_g
-print("Sum of NCQSymFunctions:")
-print(f"nc_f: {nc_f.coefficients}")
-print(f"nc_g: {nc_g.coefficients}")
-print(f"nc_f + nc_g: {nc_sum.coefficients}")
-```
+An ordered partition of a finite set of integers.
 
-### Graphs
-This package implements a construction of graphs from edge list.
+```python
+from chromatic_matroids import SetComposition
 
-### Matroids
+sc = SetComposition([[1, 2], [3, 4], [5]])  # (1,2|3,4|5)
+sc = SetComposition("(1,2|3,4|5)")          # from string repr
 
-This package implements a construction of matroids from base list.
-It also implements construction of *Schubert matroids*, *graphical matroids*, *uniform matroids*, and *nested matroids.
+sc.first()    # frozenset({1, 2})
+sc.rest()     # SetComposition([[3, 4], [5]])
+sc.alpha()    # Composition([2, 2, 1])   — block sizes
+sc.relabel({1: 10, 2: 20, 3: 30, 4: 40, 5: 50})
+sc.relabel(None)  # standardise to {1, 2, …, n}
 
-
-### Chromatic functions on matroids
-
-This package implements a construction of chromatic invariants on matroids.
-
-
-## Features
-
-
-### Compositions
-
-This subpackage exposes the following classes and methods:
-- `Composition`: A class representing a composition of integers.
-- `generate_all_composition`: A method to generate all compositions of a given size.
-- `rest`: A method to get the rest of a composition.
-- `prepend`: A method to prepend an integer to a composition.
-
-The method `generate_all_composition` precomputes compositions of size 4 and saves any computed compositions in a cache for efficiency.
-For instance running the following code one notes that the second time the method is called, it returns the cached value:
-
-```python3
-from chromatic_matroids.compositions import Composition
-import time
-# Get current time
-start_time = time.time()
-
-# Generate compositions of size 22
-N = 22
-comps = Composition.generate_all_composition(N)
-# Get time after first call
-end_time = time.time()
-print(f"Time taken for first call: {(end_time - start_time)*1000} miliseconds\n")# 5482.729434967041 miliseconds
-
-comps2 = Composition.generate_all_composition(N)
-# Get time after second call
-end_time2 = time.time()
-print(f"Time taken for second call: {(end_time2 - end_time)*1000} miliseconds\n")# 0.5552768707275391 miliseconds
+SetComposition.generate_all_setcompositions(3)  # 13 set compositions on {1,2,3}
+SetComposition.quasi_shuffles(sc1, sc2)         # dict[str, int]
 ```
 
-### Set compositions
+---
 
-This subpackage exposes the following classes and methods:
-- `SetComposition`: A class representing a set composition.
-- `generate_all_set_composition`: A method to generate all set compositions of a given size.
-- `rest`: A method to get the rest of a set composition.
-- `prepend`: A method to prepend a set to a set composition.
-- `first`: A method to get the first part of a set composition.
-- `relabel`: A method to relabel the basis set of a set composition.
-- `alpha`: A method to compute the underlying composition of a set composition.
-- `quasi_shuffles`: A static method to compute the quasi-shuffles of two set compositions.
+## Quasi-symmetric functions
 
-This subpackage also implements a method to compute the quasi-shuffles of two set compositions, which is useful in combinatorial applications.
-Here is an example of a quasi-shuffle computation:
+`QSymFunction` represents an element of QSym in the monomial basis M_α.
 
-```python3
-from chromatic_matroids.setcompositions import SetComposition
-set_comp1 = SetComposition([[1, 2], [3, 4], [5]])
-set_comp2 = SetComposition([[31], [32, 33]])
-print(f"Quasi-shuffles: {SetComposition.quasi_shuffles(set_comp1, set_comp2)}")
+```python
+from chromatic_matroids import QSymFunction, Composition
+
+f = QSymFunction(monomial_basis=Composition([1, 2]))       # M_{(1,2)}
+g = QSymFunction(monomial_basis={"(1,2)": 2, "(3,)": -1})
+zero = QSymFunction()
+
+h = f + g            # addition
+h = f * g            # quasi-shuffle product
+h = f._scalarMultiple(3)
+
+f.coefficients       # dict[str, int]
 ```
 
+---
 
-### Quasi-symmetric functions
+## Word quasi-symmetric functions
 
-### Word quasi-symmetric functions
+`NCQSymFunction` represents an element of WQSym in the monomial basis M_σ
+indexed by set compositions.
 
-### Graphs
+```python
+from chromatic_matroids import NCQSymFunction, SetComposition
 
-### Matroids
+sc = SetComposition([[1, 2], [3]])
+f = NCQSymFunction(monomial_basis=sc)          # M_{(1,2|3)}
+g = NCQSymFunction(monomial_basis="(1|2,3)")
+h = NCQSymFunction(monomial_basis={"(1|2)": 2, "(2|1)": -1})
 
-### Chromatic functions on matroids
+f + g                # addition
+f * g                # quasi-shuffle product
+f._scalarMultiple(3)
+f.comu()             # forgetful map to QSym: M_σ ↦ M_{α(σ)}
 
+f.coefficients       # dict[str, int]
+```
 
-# To do
+---
 
-## Documentation
+## Chromatic invariants
 
-- Readme file
-    - Set up documentation for each subpackage and its classes.
-        - Word QSym
-        - Graphs
-        - Matroids
-        - Chromatic functions on matroids
-    - Display examples of usage for each class and method.
-        - QSym
-        - Word QSym
-        - Graphs
-        - Matroids
-        - Chromatic functions on matroids
-- Documentation for each class and method.
-    - Add docstrings to all classes and methods.
-    - Add type hints to all classes and methods.
+```python
+from chromatic_matroids import (
+    compute_chromatic_polynomial,
+    chromatic_quasisymmetric_function,
+    chromatic_non_commutative_quasisymmetric_function,
+    stable_matroids_setcompositions,
+)
 
-    
-## Test cases
+m = uniform_matroid(3, 2)
 
-- We are still building up our unit test library
+# Characteristic polynomial χ(M, q) = Σ_{A⊆E} (-1)^|A| q^{r(E)-r(A)}
+# Returns [c₀, c₁, …, cᵣ] so that χ = c₀ + c₁q + … + cᵣqʳ
+poly = compute_chromatic_polynomial(m)   # [2, -3, 1] → (q-1)(q-2)
 
-## Efficiency
+# Chromatic QSym (commutative)
+q = chromatic_quasisymmetric_function(m)
+print(q.coefficients)   # {'(1,1,1)': 6, '(1,2)': 3}
 
-- We are improving the construction of some methods related to computing stability of some set compositions with memorization.
+# Chromatic WQSym (non-commutative lift)
+nc = chromatic_non_commutative_quasisymmetric_function(m)
+print(nc.coefficients)  # 9 terms, each coefficient 1
 
-# Contributing
-We welcome contributions to this package. If you have suggestions for improvements or new features, please open an issue or submit a pull request.
+# Stability check: σ is stable for M if the greedy scoring has a unique maximiser
+sc = SetComposition([[2], [1]])
+stable_matroids_setcompositions(uniform_matroid(2, 1), sc)  # True
+```
 
-# License
-This package is licensed under the MIT License. See the LICENSE file for more details.
+The chromatic WQSym is the sum of M_σ over all set compositions σ that are
+*stable* for M (i.e. the score function Σᵢ |B ∩ Sᵢ| · i has a unique maximising
+basis B). The QSym image is the forgetful map M_σ ↦ M_{α(σ)}.
+
+---
+
+## Lattice statistics
+
+These functions analyse the integer lattice structure of the WQSym coefficient
+matrix via the Smith Normal Form (SNF).
+
+```python
+from chromatic_matroids import (
+    smith_normal_form_factors,
+    z_rank,
+    invariant_factors,
+    z_index,
+    generate_loopless_nested_matroids,
+)
+
+# SNF of an arbitrary integer matrix
+smith_normal_form_factors([[2, 0], [0, 3]])   # [1, 6]
+smith_normal_form_factors([[6, 4]])            # [2]
+
+matroids = generate_loopless_nested_matroids(3)
+
+z_rank(matroids)             # 6  (= 3!)
+invariant_factors(matroids)  # [d₁, …, d₆] with d₁ | d₂ | … | d₆
+z_index(matroids)            # d₁ · … · d₆ = [sat(M) : M]
+```
+
+**Z-index**: given the ℤ-module M spanned by the WQSym coefficient vectors,
+its saturation is sat(M) = {x ∈ ℤᴺ : cx ∈ M for some c > 0}. The Z-index is
+[sat(M) : M]; it equals 1 if and only if M is saturated.
+
+---
+
+## Running the tests
+
+```bash
+python3 -m venv venv && source venv/bin/activate
+pip install -e "package[test]"
+pytest package/tests/ -v
+```
+
+224 tests covering all modules, including parametrised rank theorems:
+`z_rank = d!` and `QSym rank = 2^(d−1)` for loopless nested matroids of size d.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
