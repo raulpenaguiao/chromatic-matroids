@@ -479,7 +479,7 @@ const App = {
         if (r.error) return showError(r.error);
         const labels = r.labels.map(l => `<code>${esc(l)}</code>`).join(", ");
         showResults(`<div class="result-block">
-          <div class="result-title">Z-rank of WQSym span</div>
+          <div class="result-title">Span dimension</div>
           <div class="result-rank">${r.rank}</div>
           <div class="result-rank-meta">${r.rows} matroids × ${r.cols} basis elements &nbsp;·&nbsp; ${labels}</div>
         </div>`);
@@ -571,6 +571,256 @@ document.querySelectorAll(".tab").forEach(tab => {
     if (name === "graphic" && graphEditor) graphEditor._resize();
   });
 });
+
+// ── Main tab switching ────────────────────────────────────────────────────────
+function switchMainTab(name) {
+  document.querySelectorAll(".main-tab-btn").forEach(b =>
+    b.classList.toggle("active", b.dataset.tab === name));
+  document.querySelectorAll(".main-tab-content").forEach(c =>
+    c.classList.toggle("hidden", c.id !== `main-tab-${name}`));
+}
+
+// ── Matrix Explorer ───────────────────────────────────────────────────────────
+const MatrixExplorer = {
+  _last: null,         // { row_labels, col_labels, matrix, span_dim, _mode }
+  _rowOrder: [],       // _rowOrder[displayPos] = originalDataIndex
+  _colOrder: [],
+  _hiddenRows: new Set(),
+  _hiddenCols: new Set(),
+  _dragSrc: null,      // { type: 'row'|'col', dataIdx }
+  _dragEndedAt: 0,     // timestamp of last dragend (to suppress spurious click)
+
+  onModeChange() {
+    const mode = document.querySelector("input[name='mx-mode']:checked").value;
+    document.getElementById("mx-cols-nc-group").classList.toggle("hidden", mode !== "noncommutative");
+    document.getElementById("mx-cols-c-group").classList.toggle("hidden", mode !== "commutative");
+  },
+
+  async compute(btn) {
+    if (_busy) return;
+    const n    = parseInt(document.getElementById("mx-n").value);
+    const rval = document.getElementById("mx-rank").value.trim();
+    const rank = rval === "" ? null : parseInt(rval);
+    const mode           = document.querySelector("input[name='mx-mode']:checked").value;
+    const matroid_family = document.querySelector("input[name='mx-family']:checked").value;
+    const col_set        = mode === "commutative"
+      ? "all_compositions"
+      : document.querySelector("input[name='mx-colset']:checked").value;
+
+    _busy = true;
+    document.body.classList.add("busy");
+    btn.disabled = true;
+    const origText = btn.textContent;
+    btn.textContent = "Computing…";
+
+    try {
+      const result = await apiPost("/api/matrix/compute", { n, rank, mode, matroid_family, col_set });
+      if (result.error) {
+        document.getElementById("mx-content").innerHTML =
+          `<div class="result-error">${esc(result.error)}</div>`;
+        return;
+      }
+      MatrixExplorer.render(result, mode);
+    } catch(e) {
+      document.getElementById("mx-content").innerHTML =
+        `<div class="result-error">${esc(e.message)}</div>`;
+    } finally {
+      _busy = false;
+      document.body.classList.remove("busy");
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
+  },
+
+  render(data, mode) {
+    this._last = { ...data, _mode: mode };
+    this._rowOrder = data.row_labels.map((_, i) => i);
+    this._colOrder = data.col_labels.map((_, i) => i);
+    this._hiddenRows = new Set();
+    this._hiddenCols = new Set();
+    this._rerender();
+  },
+
+  _rerender() {
+    if (!this._last) return;
+    const { row_labels, col_labels, matrix, span_dim, _mode } = this._last;
+    const el   = document.getElementById("mx-content");
+    const kind = _mode === "commutative" ? "compositions" : "set compositions";
+
+    const visR = this._rowOrder.filter(i => !this._hiddenRows.has(i));
+    const visC = this._colOrder.filter(j => !this._hiddenCols.has(j));
+    const hasHidden = this._hiddenRows.size > 0 || this._hiddenCols.size > 0;
+
+    const cc = v => v === 0 ? "mx-cell-zero" : v > 0 ? "mx-cell-pos" : "mx-cell-neg";
+
+    const thead = `<thead><tr>
+      <th class="mx-corner"></th>
+      ${visC.map(j => `
+        <th class="mx-col-hdr" draggable="true"
+            ondragstart="MatrixExplorer._onDragStart(event,'col',${j})"
+            ondragend="MatrixExplorer._onDragEnd(event)"
+            ondragover="MatrixExplorer._onDragOver(event,'col',${j})"
+            ondragleave="MatrixExplorer._onDragLeave(event)"
+            ondrop="MatrixExplorer._onDrop(event,'col',${j})"
+            onclick="MatrixExplorer._onColHdrClick(${j})"
+            title="Click to hide · Drag to reorder">
+          <div><span>${esc(col_labels[j])}</span></div>
+        </th>`).join("")}
+    </tr></thead>`;
+
+    const tbody = `<tbody>${visR.map(i => `
+      <tr ondragover="MatrixExplorer._onDragOver(event,'row',${i})"
+          ondragleave="MatrixExplorer._onDragLeave(event)"
+          ondrop="MatrixExplorer._onDrop(event,'row',${i})">
+        <th class="mx-row-hdr" draggable="true"
+            ondragstart="MatrixExplorer._onDragStart(event,'row',${i})"
+            ondragend="MatrixExplorer._onDragEnd(event)"
+            onclick="MatrixExplorer._onRowHdrClick(${i})"
+            title="Click to hide · Drag to reorder">
+          ${esc(row_labels[i])}
+        </th>
+        ${visC.map(j => {
+          const v = matrix[i][j];
+          return `<td class="mx-cell ${cc(v)}">${v !== 0 ? v : ""}</td>`;
+        }).join("")}
+      </tr>`).join("")}
+    </tbody>`;
+
+    const hiddenBtn = hasHidden
+      ? `<button class="btn-sm btn-secondary" onclick="MatrixExplorer.resetVisibility()">
+           Show hidden (${this._hiddenRows.size}r + ${this._hiddenCols.size}c)
+         </button>`
+      : "";
+
+    el.innerHTML = `
+      <div class="mx-stats">
+        <span>${visR.length} × ${visC.length} ${kind}</span>
+        <span class="mx-stat-dim has-tooltip"
+          data-tooltip="Dimension of the span of the terms over ℚ&#10;(rank of the coefficient matrix)">
+          Span dimension: <strong>${span_dim}</strong>
+        </span>
+        <span class="mx-stats-actions">
+          ${hiddenBtn}
+          <button class="btn-sm btn-secondary mx-latex-btn" onclick="MatrixExplorer.exportLatex()">Export LaTeX</button>
+        </span>
+      </div>
+      <div class="mx-table-wrap">
+        <table class="mx-table">${thead}${tbody}</table>
+      </div>`;
+  },
+
+  // ── Visibility ──────────────────────────────────────────────────────────────
+  _onRowHdrClick(i) {
+    if (Date.now() - this._dragEndedAt < 300) return;
+    this._hiddenRows.add(i);
+    this._rerender();
+  },
+
+  _onColHdrClick(j) {
+    if (Date.now() - this._dragEndedAt < 300) return;
+    this._hiddenCols.add(j);
+    this._rerender();
+  },
+
+  resetVisibility() {
+    this._hiddenRows.clear();
+    this._hiddenCols.clear();
+    this._rerender();
+  },
+
+  // ── Drag-and-drop ──────────────────────────────────────────────────────────
+  _onDragStart(event, type, dataIdx) {
+    this._dragSrc = { type, dataIdx };
+    event.dataTransfer.effectAllowed = "move";
+    event.stopPropagation();
+  },
+
+  _onDragEnd(event) {
+    this._dragEndedAt = Date.now();
+    this._dragSrc = null;
+    document.querySelectorAll(".mx-table .drag-over")
+      .forEach(el => el.classList.remove("drag-over"));
+  },
+
+  _onDragOver(event, type, dataIdx) {
+    if (!this._dragSrc || this._dragSrc.type !== type) return;
+    if (this._dragSrc.dataIdx === dataIdx) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    event.currentTarget.classList.add("drag-over");
+  },
+
+  _onDragLeave(event) {
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+      event.currentTarget.classList.remove("drag-over");
+    }
+  },
+
+  _onDrop(event, type, dataIdx) {
+    event.preventDefault();
+    if (!this._dragSrc || this._dragSrc.type !== type) return;
+    event.currentTarget.classList.remove("drag-over");
+    const from = this._dragSrc.dataIdx;
+    const to   = dataIdx;
+    this._dragSrc = null;
+    if (from === to) return;
+    const order = type === "row" ? this._rowOrder : this._colOrder;
+    const fi = order.indexOf(from), ti = order.indexOf(to);
+    if (fi === -1 || ti === -1) return;
+    order.splice(fi, 1);
+    order.splice(ti, 0, from);
+    this._rerender();
+  },
+
+  // ── LaTeX export ────────────────────────────────────────────────────────────
+  exportLatex() {
+    if (!this._last) return;
+    const { row_labels, col_labels, matrix, span_dim } = this._last;
+    const visR = this._rowOrder.filter(i => !this._hiddenRows.has(i));
+    const visC = this._colOrder.filter(j => !this._hiddenCols.has(j));
+
+    const lesc = s => s
+      .replace(/\\/g, "\\textbackslash ")
+      .replace(/\{/g, "\\{").replace(/\}/g, "\\}")
+      .replace(/_/g, "\\_").replace(/\^/g, "\\^{}")
+      .replace(/&/g, "\\&").replace(/#/g, "\\#")
+      .replace(/%/g, "\\%").replace(/\$/g, "\\$");
+
+    const colSpec   = "l|" + "c".repeat(visC.length);
+    const headerRow = visC.map(j => `\\rotatebox{90}{\\texttt{${lesc(col_labels[j])}}}`).join(" & ");
+    const dataRows  = visR.map(i => {
+      const cells = visC.map(j => String(matrix[i][j])).join(" & ");
+      return `\\texttt{${lesc(row_labels[i])}} & ${cells} \\\\`;
+    }).join("\n");
+
+    const latex =
+`% Generated by Chromatic Matroids Explorer
+% Span dimension: ${span_dim}
+\\begin{tabular}{${colSpec}}
+\\hline
+ & ${headerRow} \\\\
+\\hline
+${dataRows}
+\\hline
+\\end{tabular}`;
+
+    navigator.clipboard.writeText(latex).then(() => {
+      const btn = document.querySelector(".mx-latex-btn");
+      if (btn) {
+        const orig = btn.textContent;
+        btn.textContent = "Copied!";
+        btn.style.color = "var(--success)";
+        setTimeout(() => { btn.textContent = orig; btn.style.color = ""; }, 1500);
+      }
+    }).catch(() => {
+      const a = Object.assign(document.createElement("a"), {
+        href: URL.createObjectURL(new Blob([latex], { type: "text/plain" })),
+        download: "matrix.tex",
+      });
+      a.click();
+    });
+  },
+};
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 renderMatroids();

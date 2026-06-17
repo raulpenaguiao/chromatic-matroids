@@ -18,6 +18,11 @@ from chromatic_matroids import (
     z_rank,
     z_index,
     invariant_factors,
+    SetComposition,
+    Composition,
+    from_set_to_set_composition,
+    generate_valid_subsets,
+    generate_min_max_set_compositions,
 )
 from . import operations
 
@@ -440,3 +445,94 @@ def compute_zindex():
         "cols": len(keys),
         "labels": labels,
     })
+
+
+# ── Matrix Explorer ────────────────────────────────────────────────────────────
+
+@bp.route("/api/matrix/compute", methods=["POST"])
+def compute_matrix():
+    try:
+        d = request.json
+        n = int(d["n"])
+        rank_filter = d.get("rank")
+        mode = d.get("mode", "noncommutative")
+        matroid_family = d.get("matroid_family", "loopless_nested")
+        col_set = d.get("col_set", "proof_sts")
+
+        _check_size(n)
+
+        needs_rank = matroid_family in ("loopless_nested_by_rank", "schubert_by_rank")
+        rk = int(rank_filter) if rank_filter is not None else None
+        if needs_rank and rk is None:
+            return jsonify({"error": "rank r is required for the selected matroid family."}), 400
+
+        # Build row matroids
+        row_matroids = []
+        if matroid_family in ("loopless_nested", "loopless_nested_by_rank"):
+            mats = generate_loopless_nested_matroids(n)
+            chains = generate_nested_matroids_doublechains(n)
+            for m, (_, r, X, R) in zip(mats, chains):
+                if needs_rank and r != rk:
+                    continue
+                prev = frozenset()
+                parts = []
+                for xi in X:
+                    parts.append(sorted(xi - prev))
+                    prev = xi
+                parts_str = "|".join(",".join(str(x) for x in p) for p in parts)
+                label = f"ne({n},{r};{parts_str};{','.join(str(ri) for ri in R)})"
+                row_matroids.append((m, label))
+        else:  # schubert family
+            ranks_to_use = [rk] if needs_rank else list(range(n + 1))
+            for r in ranks_to_use:
+                for A in itertools.combinations(range(1, n + 1), r):
+                    m = schubert_matroid(n, frozenset(A))
+                    label = "sh({},{{{}}})".format(n, ",".join(str(a) for a in A))
+                    row_matroids.append((m, label))
+
+        if not row_matroids:
+            return jsonify({"error": "No matroids found for the given parameters."}), 400
+
+        # Build columns and coefficient extractor
+        if mode == "noncommutative":
+            if col_set == "proof_sts":
+                valid_ss = sorted(generate_valid_subsets(n), key=lambda x: (len(x), sorted(x)))
+                cols = [from_set_to_set_composition(A, n) for A in valid_ss]
+            elif col_set == "minmax":
+                cols = generate_min_max_set_compositions(n)
+            elif col_set == "all_setcompositions":
+                cols = SetComposition.generate_all_setcompositions(n)
+            else:
+                return jsonify({"error": f"Unknown col_set '{col_set}'."}), 400
+            col_labels = [str(sc) for sc in cols]
+
+            def _row_coeffs(m):
+                nc = _run_timed(_cached_wqsym, m)
+                return [nc.coefficients.get(key, 0) for key in col_labels]
+        else:  # commutative
+            comps = Composition.generate_all_composition(n)
+            col_labels = [str(c) for c in comps]
+
+            def _row_coeffs(m):
+                q = _run_timed(chromatic_quasisymmetric_function, m)
+                return [q.coefficients.get(key, 0) for key in col_labels]
+
+        # Build matrix
+        matrix = []
+        for m, _ in row_matroids:
+            _check_size(len(m.ground_set))
+            matrix.append(_row_coeffs(m))
+
+        row_labels = [lbl for _, lbl in row_matroids]
+
+        arr = np.array(matrix, dtype=float) if matrix else np.zeros((0, len(col_labels)))
+        span_dim = int(np.linalg.matrix_rank(arr)) if arr.size else 0
+
+        return jsonify({
+            "row_labels": row_labels,
+            "col_labels": col_labels,
+            "matrix": matrix,
+            "span_dim": span_dim,
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400

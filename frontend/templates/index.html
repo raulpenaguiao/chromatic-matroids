@@ -12,11 +12,20 @@
   <h1>Chromatic Matroids</h1>
 </header>
 
+<nav class="main-tabs">
+  <button class="main-tab-btn active" data-tab="matroid" onclick="switchMainTab('matroid')">Matroid Explorer</button>
+  <button class="main-tab-btn" data-tab="matrix" onclick="switchMainTab('matrix')">Matrix Explorer</button>
+</nav>
+
+<!-- ═══════════════════  MATROID EXPLORER TAB  ════════════════════════════════ -->
+<div id="main-tab-matroid" class="main-tab-content">
+
 <div class="toolbar">
   <span class="toolbar-label">On selection:</span>
   <button class="btn-primary" onclick="App.computeQSym(this)">QSym (M basis)</button>
   <button class="btn-primary" onclick="App.computeWQSym(this)">WQSym (M basis)</button>
-  <button class="btn-primary" onclick="App.computeZRank(this)">Z-rank</button>
+  <button class="btn-primary has-tooltip" onclick="App.computeZRank(this)"
+    data-tooltip="Dimension of the span of the WQSym terms over ℚ">Span dimension</button>
   <button class="btn-primary has-tooltip" onclick="App.computeZIndex(this)"
     data-tooltip="Smith Normal Form of the WQSym matrix A = UDV&#10;U, V: unimodular integer matrices&#10;D = diag(d&#8321; | d&#8322; | &#8230; | d&#7523; | 0 &#8230; 0),  each d&#7522; | d&#7522;&#8330;&#8321;&#10;Z-index = d&#8321; &#183; d&#8322; &#183; &#8230; &#183; d&#7523; = [sat(M) : M]&#10;sat(M) = { x &#8712; &#8484;&#7472; : cx &#8712; M for some c &gt; 0 }&#10;Z-index = 1  &#8660;  M is saturated">Z-index</button>
   <button class="btn-secondary" onclick="App.clearResults()">Clear results</button>
@@ -52,6 +61,87 @@
   </section>
 
 </div>
+</div><!-- /#main-tab-matroid -->
+
+<!-- ═══════════════════  MATRIX EXPLORER TAB  ═════════════════════════════════ -->
+<div id="main-tab-matrix" class="main-tab-content hidden">
+<div class="mx-layout">
+
+  <aside class="mx-config">
+
+    <div class="mx-field-group">
+      <div class="mx-field-label">Mode</div>
+      <label class="mx-radio">
+        <input type="radio" name="mx-mode" value="noncommutative" checked onchange="MatrixExplorer.onModeChange()">
+        Non-commutative (WQSym)
+      </label>
+      <label class="mx-radio">
+        <input type="radio" name="mx-mode" value="commutative" onchange="MatrixExplorer.onModeChange()">
+        Commutative (QSym)
+      </label>
+    </div>
+
+    <div class="mx-field-group">
+      <div class="mx-field-label">Size</div>
+      <div class="mx-row-inputs">
+        <label class="mx-input-label">n <input id="mx-n" type="number" min="1" max="8" value="4"></label>
+        <label class="mx-input-label">rank r (optional) <input id="mx-rank" type="number" min="0" placeholder="any"></label>
+      </div>
+    </div>
+
+    <div class="mx-field-group">
+      <div class="mx-field-label">Matroids (rows)</div>
+      <label class="mx-radio">
+        <input type="radio" name="mx-family" value="loopless_nested" checked>
+        Loopless nested (all ranks)
+      </label>
+      <label class="mx-radio">
+        <input type="radio" name="mx-family" value="loopless_nested_by_rank">
+        Loopless nested (rank r)
+      </label>
+      <label class="mx-radio">
+        <input type="radio" name="mx-family" value="schubert">
+        Schubert (all ranks)
+      </label>
+      <label class="mx-radio">
+        <input type="radio" name="mx-family" value="schubert_by_rank">
+        Schubert (rank r)
+      </label>
+    </div>
+
+    <div class="mx-field-group" id="mx-cols-nc-group">
+      <div class="mx-field-label">Columns (set compositions)</div>
+      <label class="mx-radio">
+        <input type="radio" name="mx-colset" value="proof_sts" checked>
+        Proof st's
+      </label>
+      <label class="mx-radio">
+        <input type="radio" name="mx-colset" value="minmax">
+        Min-max
+      </label>
+      <label class="mx-radio">
+        <input type="radio" name="mx-colset" value="all_setcompositions">
+        All set compositions
+      </label>
+    </div>
+
+    <div class="mx-field-group hidden" id="mx-cols-c-group">
+      <div class="mx-field-label">Columns</div>
+      <p class="hint">All integer compositions of n</p>
+    </div>
+
+    <button class="btn-primary" id="mx-compute-btn" onclick="MatrixExplorer.compute(this)">Compute matrix</button>
+
+  </aside>
+
+  <section class="mx-display">
+    <div id="mx-content" class="mx-placeholder">
+      Configure parameters and click "Compute matrix".
+    </div>
+  </section>
+
+</div>
+</div><!-- /#main-tab-matrix -->
 
 <!-- ═══════════════════════════  ADD MODAL  ══════════════════════════════ -->
 <div id="modal-add" class="modal-backdrop hidden">
