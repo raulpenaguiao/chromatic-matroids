@@ -33,10 +33,13 @@
 
 <div class="main">
 
-  <section class="matroids-panel">
+  <section class="matroids-panel" id="matroids-sidebar">
     <div class="panel-header">
       <h2>Matroids</h2>
-      <button class="btn-add" onclick="Modal.showAdd()">+ Add</button>
+      <div class="panel-header-actions">
+        <button class="btn-add" onclick="Modal.showAdd()">+ Add</button>
+        <button class="btn-sidebar-toggle" id="matroids-sidebar-toggle" onclick="toggleSidebar('matroids-sidebar','matroids-sidebar-toggle')" title="Collapse panel">&#8249;</button>
+      </div>
     </div>
     <div class="panel-subheader">
       <label class="select-all-label">
@@ -67,7 +70,9 @@
 <div id="main-tab-matrix" class="main-tab-content hidden">
 <div class="mx-layout">
 
-  <aside class="mx-config">
+  <aside class="mx-config" id="mx-sidebar">
+    <button class="btn-sidebar-toggle mx-sidebar-toggle" id="mx-sidebar-toggle" onclick="toggleSidebar('mx-sidebar','mx-sidebar-toggle')" title="Collapse panel">&#8249;</button>
+    <div class="mx-config-inner">
 
     <div class="mx-field-group">
       <div class="mx-field-label">Mode</div>
@@ -132,6 +137,7 @@
 
     <button class="btn-primary" id="mx-compute-btn" onclick="MatrixExplorer.compute(this)">Compute matrix</button>
 
+    </div><!-- /.mx-config-inner -->
   </aside>
 
   <section class="mx-display">

@@ -561,3 +561,58 @@ button:active { transform: scale(0.95); }
 .mx-table tr.drag-over .mx-row-hdr,
 .mx-table tr.drag-over .mx-cell { background: #bfdbfe !important; }
 .mx-col-hdr.drag-over div { background: #bfdbfe !important; }
+
+/* ── Sidebar toggle button ── */
+.panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-sidebar-toggle {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.btn-sidebar-toggle:hover { background: var(--border); color: var(--text); }
+
+/* ── Matroids panel collapse ── */
+.matroids-panel { transition: width 0.2s ease; }
+.matroids-panel.collapsed {
+  width: 28px;
+  min-width: 28px;
+}
+.matroids-panel.collapsed .panel-subheader,
+.matroids-panel.collapsed #matroid-list,
+.matroids-panel.collapsed .panel-header h2,
+.matroids-panel.collapsed .btn-add {
+  display: none;
+}
+.matroids-panel.collapsed .panel-header {
+  padding: 8px 2px;
+  justify-content: center;
+}
+
+/* ── mx-config collapse ── */
+.mx-config { transition: width 0.2s ease; position: relative; }
+.mx-sidebar-toggle {
+  align-self: flex-end;
+  margin-bottom: 4px;
+}
+.mx-config.collapsed {
+  width: 28px;
+  min-width: 28px;
+  padding: 8px 2px;
+  align-items: center;
+}
+.mx-config.collapsed .mx-config-inner { display: none; }
+

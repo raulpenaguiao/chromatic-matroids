@@ -822,5 +822,29 @@ ${dataRows}
   },
 };
 
+// ── Sidebar collapse ──────────────────────────────────────────────────────────
+function toggleSidebar(panelId, btnId) {
+  const panel = document.getElementById(panelId);
+  const btn   = document.getElementById(btnId);
+  const collapsed = panel.classList.toggle('collapsed');
+  btn.innerHTML  = collapsed ? '&#8250;' : '&#8249;';
+  btn.title      = collapsed ? 'Expand panel' : 'Collapse panel';
+}
+
+// On small screens, start with sidebars collapsed
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.innerWidth <= 640) {
+    ['matroids-sidebar', 'mx-sidebar'].forEach(id => {
+      const panel = document.getElementById(id);
+      const btn   = document.getElementById(id + '-toggle');
+      if (panel && btn) {
+        panel.classList.add('collapsed');
+        btn.innerHTML = '&#8250;';
+        btn.title     = 'Expand panel';
+      }
+    });
+  }
+});
+
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 renderMatroids();
