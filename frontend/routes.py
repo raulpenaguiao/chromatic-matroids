@@ -87,10 +87,14 @@ _wqsym_cache: dict = {}
 
 
 def _bases_key(m):
-    """Cheap canonical key: sorted bases after normalising ground set to {1,...,n}."""
+    """Canonical key: ground set size + sorted normalised bases.
+    Ground set size must be included to prevent cache collisions between matroids on
+    different ground sets that share the same normalised bases (e.g. a rank-2 matroid
+    on {1,2,3} and one on {1,2,3,4} where 4 is a loop share the same normalised bases
+    but produce WQSym functions indexed by different sets of set compositions)."""
     gs = sorted(m.ground_set)
     idx = {e: i + 1 for i, e in enumerate(gs)}
-    return tuple(sorted(tuple(sorted(idx[e] for e in b)) for b in m.bases_sets))
+    return (len(gs), tuple(sorted(tuple(sorted(idx[e] for e in b)) for b in m.bases_sets)))
 
 
 def _cached_wqsym(m):

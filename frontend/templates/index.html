@@ -112,6 +112,15 @@
         <input type="radio" name="mx-family" value="schubert_by_rank">
         Schubert (rank r)
       </label>
+      <p class="hint mx-notation-hint">
+        <strong>Nested:</strong> <code>ne(d, r; Y<sub>1</sub>|…|Y<sub>k</sub>; r<sub>1</sub>,…,r<sub>k</sub>)</code><br>
+        d = |ground set|, r = rank.<br>
+        Y<sub>i</sub> = <em>new</em> elements at step i
+        (X<sub>i</sub> = X<sub>i−1</sub> ∪ Y<sub>i</sub>, X<sub>0</sub> = ∅).<br>
+        r<sub>i</sub> = rank bound for X<sub>i</sub>.<br>
+        <strong>Schubert:</strong> <code>sh(d, {a<sub>1</sub>&lt;…&lt;a<sub>r</sub>})</code><br>
+        B = {b<sub>1</sub>&lt;…&lt;b<sub>r</sub>} is a basis iff b<sub>i</sub> ≤ a<sub>i</sub> for all i.
+      </p>
     </div>
 
     <div class="mx-field-group" id="mx-cols-nc-group">
@@ -128,6 +137,10 @@
         <input type="radio" name="mx-colset" value="all_setcompositions">
         All set compositions
       </label>
+      <p class="hint mx-notation-hint">
+        <code>(A<sub>1</sub>|A<sub>2</sub>|…|A<sub>k</sub>)</code>: ordered partition of {1,…,d}.<br>
+        Entry = coefficient of M<sub>(A<sub>1</sub>|…|A<sub>k</sub>)</sub> in the WQSym expansion.
+      </p>
     </div>
 
     <div class="mx-field-group hidden" id="mx-cols-c-group">
@@ -180,11 +193,14 @@
         <label>rank <input id="ne-rank" type="number" min="0" value="2"></label>
       </div>
       <p class="hint">
-        <b>Layers</b> — one line per chain level, comma-separated elements (incremental, not cumulative).<br>
-        The last layer must contain all remaining elements so that ∪layers = {1,…,n}.<br>
-        <b>Rank bounds</b> — one integer per layer, strictly increasing, last value = rank.<br>
-        Example: layers <code>1,2 / 3,4</code>, bounds <code>1,2</code>
-        gives ne(4, r=2, X₁={1,2}, X₂={1,2,3,4}, R=(1,2)).
+        Notation: <code>ne(d, r; Y<sub>1</sub>|…|Y<sub>k</sub>; r<sub>1</sub>,…,r<sub>k</sub>)</code><br>
+        d = ground set size, r = rank.<br>
+        <b>Layers</b> = Y<sub>i</sub>, the <em>new</em> elements added at step i
+        (X<sub>i</sub> = X<sub>i−1</sub> ∪ Y<sub>i</sub>, X<sub>0</sub> = ∅). One layer per line, comma-separated.
+        Together the layers must cover {1,…,n}.<br>
+        <b>Rank bounds</b> = r<sub>i</sub>, the rank of X<sub>i</sub>. Strictly increasing; last value = r.<br>
+        Example: layers <code>1,2</code> / <code>3,4</code>, bounds <code>1,2</code>
+        → ne(4, 2; {1,2}|{3,4}; 1,2) with X<sub>1</sub>={1,2}, X<sub>2</sub>={1,2,3,4}.
       </p>
       <label>Layers (one per line)
         <textarea id="ne-layers" rows="3" placeholder="1,2&#10;3,4"></textarea>

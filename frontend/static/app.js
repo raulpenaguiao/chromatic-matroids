@@ -676,7 +676,7 @@ const MatrixExplorer = {
             ondragstart="MatrixExplorer._onDragStart(event,'row',${i})"
             ondragend="MatrixExplorer._onDragEnd(event)"
             onclick="MatrixExplorer._onRowHdrClick(${i})"
-            title="Click to hide · Drag to reorder">
+            title="Click to hide · Drag to reorder&#10;ne(d, r; Y₁|…|Yₖ; r₁,…,rₖ): d=|E|, r=rank, Yᵢ=new elements at step i (Xᵢ=Xᵢ₋₁∪Yᵢ), rᵢ=rank bound for Xᵢ&#10;sh(d, {a₁<…<aᵣ}): B={b₁<…<bᵣ} is a basis iff bᵢ≤aᵢ for all i">
           ${esc(row_labels[i])}
         </th>
         ${visC.map(j => {
