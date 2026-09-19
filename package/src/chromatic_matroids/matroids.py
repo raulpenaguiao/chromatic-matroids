@@ -113,21 +113,29 @@ class Matroid:
                     independent_sets.add(subset)
         return independent_sets
     
-    def is_nested(self) -> bool:
+    def loops(self) -> frozenset:
         """
-        Check if the matroid is nested.
+        Return the loops of the matroid.
 
-        A matroid is nested (Bonin–de Mier) if and only if its lattice of flats
-        forms a chain: for any two flats F1 and F2, either F1 ⊆ F2 or F2 ⊆ F1.
+        A loop is an element contained in no basis, equivalently an element
+        e with rank({e}) == 0.
+
+        Returns:
+            frozenset[int]: The set of loops of the matroid
+        """
+        return frozenset(e for e in self.ground_set if self.rank({e}) == 0)
+
+    def flats(self) -> List[frozenset]:
+        """
+        Return all flats of the matroid.
 
         A flat is a set F such that adding any element outside F strictly
         increases the rank, i.e. r(F) < r(F ∪ {e}) for every e ∉ F.
 
         Returns:
-            bool: True if the matroid is nested, False otherwise
+            List[frozenset[int]]: All flats of the matroid
         """
-        # Collect all flats of the matroid
-        flats = []
+        result = []
         for subset in self._get_all_subsets(self.ground_set):
             r_subset = self.rank(subset)
             is_flat = all(
@@ -136,14 +144,105 @@ class Matroid:
                 if e not in subset
             )
             if is_flat:
-                flats.append(subset)
+                result.append(subset)
+        return result
 
-        # The matroid is nested iff its flats form a chain under inclusion
-        for i, f1 in enumerate(flats):
-            for f2 in flats[i + 1:]:
+    def cyclic_flats(self) -> List[frozenset]:
+        """
+        Return all cyclic flats of the matroid.
+
+        A cyclic flat is a flat F that is the union of all circuits it
+        contains, equivalently a flat F such that rank(F - {e}) == rank(F)
+        for every e in F (i.e. M|F has no coloops).
+
+        Returns:
+            List[frozenset[int]]: All cyclic flats of the matroid
+        """
+        result = []
+        for F in self.flats():
+            r_F = self.rank(F)
+            if all(self.rank(F - {e}) == r_F for e in F):
+                result.append(F)
+        return result
+
+    def is_nested(self) -> bool:
+        """
+        Check if the matroid is nested.
+
+        A matroid is nested if and only if its *cyclic* flats form a chain:
+        for any two cyclic flats F1 and F2, either F1 ⊆ F2 or F2 ⊆ F1.
+
+        Note this is a strictly weaker requirement than asking that *all*
+        flats of the matroid form a chain: nested matroids can, and generally
+        do, have plenty of incomparable non-cyclic flats. For instance the
+        Schubert matroid SM({2,4}) on {1,2,3,4} is nested (its cyclic flats
+        are {}, {3,4}, {1,2,3,4}, a chain) even though its flats {1} and {2}
+        are incomparable.
+
+        Returns:
+            bool: True if the matroid is nested, False otherwise
+        """
+        cyclic_flats = self.cyclic_flats()
+        for i, f1 in enumerate(cyclic_flats):
+            for f2 in cyclic_flats[i + 1:]:
                 if not (f1.issubset(f2) or f2.issubset(f1)):
                     return False
         return True
+
+    def restriction(self, F) -> 'Matroid':
+        """
+        Return the restriction M|F of the matroid to a subset F.
+
+        The bases of M|F are the maximum-size intersections B ∩ F, ranging
+        over bases B of M (equivalently, the maximal subsets of F that are
+        independent in M).
+
+        Args:
+            F: The subset of the ground set to restrict to
+
+        Returns:
+            Matroid: The restriction M|F, on ground set F
+        """
+        F = frozenset(F)
+        r_F = self.rank(F)
+        bases = {frozenset(B & F) for B in self.bases_sets if len(B & F) == r_F}
+        return Matroid(F, bases)
+
+    def contraction(self, F) -> 'Matroid':
+        """
+        Return the contraction M/F of the matroid by a subset F.
+
+        M/F has ground set (ground_set - F), and rank function
+        rk_{M/F}(A) = rk_M(A ∪ F) - rk_M(F) for A ⊆ ground_set - F.
+
+        Args:
+            F: The subset of the ground set to contract
+
+        Returns:
+            Matroid: The contraction M/F, on ground set (ground_set - F)
+        """
+        F = frozenset(F) & self.ground_set
+        r_F = self.rank(F)
+        rest = frozenset(self.ground_set - F)
+        bases = {frozenset(B - F) for B in self.bases_sets if len(B & F) == r_F}
+        return Matroid(rest, bases)
+
+    def minor(self, Fi, Fim1) -> 'Matroid':
+        """
+        Return the minor (M|Fi)/Fim1, for Fim1 ⊆ Fi ⊆ ground_set.
+
+        This is the matroid on Fi - Fim1 obtained by first restricting to
+        Fi and then contracting by Fim1; it is the building block used to
+        read off a nested matroid's structure along a flag of subsets.
+
+        Args:
+            Fi: The (larger) subset to restrict to
+            Fim1: The (smaller) subset to then contract by
+
+        Returns:
+            Matroid: The minor (M|Fi)/Fim1, on ground set Fi - Fim1
+        """
+        return self.restriction(Fi).contraction(Fim1)
     
     def extend(self, element: int) -> 'Matroid':
         """
