@@ -17,6 +17,7 @@ classifiers = [
 ]
 license = "MIT"
 license-files = ["LICENSE"]
+dependencies = ["numpy"]
 
 [project.urls]
 Homepage = "https://github.com/raulpenaguiao/chromatic-matroids/tree/main/package"
@@ -26,7 +27,7 @@ Issues = "https://github.com/raulpenaguiao/chromatic-matroids/tree/main/package/
 packages = ["src/chromatic_matroids"]
 
 [project.optional-dependencies]
-test = ["pytest", "numpy"]
+test = ["pytest"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
